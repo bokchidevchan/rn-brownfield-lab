@@ -17,6 +17,36 @@ consumer-ios/      RN 을 모르는 순수 Swift 앱. node_modules 가 없습니
 확인했습니다. iOS 의 개별 버튼 동작은 미확인이고 실기기는 양쪽 다 안 했습니다.
 자세한 범위는 아래 "확인한 것"에 적었습니다.
 
+## 전과 후: 구조가 어떻게 바뀌나
+
+01 번(전)은 앱과 RN 이 한 지붕입니다. 앱 빌드가 JS 툴체인에 직접 묶입니다.
+
+```
+저장소 하나
+├─ node_modules/          RN 런타임, 라이브러리 전부
+├─ index.js, src/         JS 화면
+├─ android/               build.gradle 에 com.facebook.react 플러그인.
+│                         빌드 중에 node 를 실행해 autolinking 과 번들 생성
+└─ ios/                   Podfile 이 node_modules 경로의 pod 를 참조
+```
+
+빌드하는 모든 사람과 모든 CI 머신에 Node 와 node_modules 가 필요하고, RN 버전 업그레이드가 앱 저장소의 변경이며, 앱 코드가 ReactActivity 나 RCTRootView 같은 RN 내부 타입을 직접 만집니다.
+
+02 번(후)은 생산자와 소비자로 갈라집니다.
+
+```
+rn-sdk/            JS 팀 소유. 여기만 Node 가 필요합니다
+├─ android/rnsdk/  빌드하면 AAR (번들 + 글루 + 엔진). maven 으로 배포
+└─ ios/RnSdkKit/   빌드하면 XCFramework (main.jsbundle 내장)
+
+consumer-android/  implementation("com.example:rnsdk:...") 한 줄이 통합의 전부
+consumer-ios/      XCFramework 링크 + 공개 API 호출. RN 타입이 코드에 없음
+```
+
+번들 생성과 autolinking 은 SDK 를 빌드할 때 한 번 일어나 산출물 안에 고정되고, 소비 앱의 빌드는 평범한 바이너리 의존성 해석이 됩니다. 경계도 바뀝니다. SDK 가 공개 API 만 내놓고 RN 은 구현 세부가 되며(iOS 는 `@_implementationOnly import React` 로 컴파일러 수준에서 강제), 조직 관점에서는 JS 팀이 버전 붙여 릴리스하고 앱 팀이 버전을 올려 받는 라이브러리 관계가 됩니다.
+
+대가는 번들의 박제입니다. JS 한 줄을 고쳐도 SDK 재배포가 필요합니다. 이 지점을 다시 푸는 것이 05~07 번의 원격 번들 이야기입니다.
+
 ## 무엇이 달라지는가
 
 | | 01 번 (한 저장소) | 02 번 (SDK 분리) |
