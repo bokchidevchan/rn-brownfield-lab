@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+dist/
+build/
+*.log
+
+# 학습 노트와 글 초안은 로컬에만 둡니다
+docs/
+drafts/
