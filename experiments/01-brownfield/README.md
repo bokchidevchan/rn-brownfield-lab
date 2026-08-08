@@ -164,6 +164,50 @@ ABI 를 줄일 때 헷갈리는 지점이 하나 있습니다. `gradle.propertie
 실제로 빼려면 `abiFilters` 나 `splits.abi` 를 써야 합니다. 위 표의 50.7 MB 와 18.4 MB 가
 같은 릴리스 빌드에서 이 차이 하나로 갈린 결과입니다.
 
+### Hermes 와 JSC
+
+`hermesEnabled` 는 엔진을 쓸지 말지가 아니라 어느 엔진을 쓸지 고르는 값입니다.
+JS 엔진 없이는 앱이 돌지 않습니다.
+
+Hermes 는 두 부분으로 나뉩니다. 이걸 구분하지 않으면 헷갈립니다.
+
+```
+hermesc                            libhermes.so
+= 컴파일러                          = 엔진(VM)
+= node_modules 안의 macOS 실행파일   = APK 안의 arm64 공유 라이브러리
+= 내 맥에서 빌드할 때 한 번 돎        = 사용자 폰에서 앱 켤 때마다 돎
+= 앱에 안 들어감                     = 2.27MB 로 들어감
+```
+
+APK 안의 `index.android.bundle` 은 `hermesc` 의 출력물입니다.
+손으로 직접 돌려도 같은 매직 넘버가 나옵니다.
+
+```bash
+node_modules/react-native/sdks/hermesc/osx-bin/hermesc \
+  -emit-binary -out out.hbc bundle.js
+# c6 1f bc 03 c1 03 19 1f  ← Hermes 바이트코드
+```
+
+같은 앱을 arm64 릴리스로 두 번 빌드해서 비교했습니다.
+
+| | Hermes | JSC |
+|---|---|---|
+| APK | 18.4 MB | 21.7 MB |
+| 엔진 `.so` | libhermes 2.27 MB | libjsc 5.82 MB |
+| 번들 | 814 KB (바이트코드) | 915 KB (JS 텍스트) |
+| 콜드 스타트 | 390 / 239 / 175 | 413 / 486 / 218 |
+| 첫 RN 진입 | 188ms | 191ms |
+
+크기는 Hermes 가 3.3MB 작습니다. 엔진 바이너리 차이가 대부분입니다.
+
+시작 시간은 이 에뮬레이터에서 유의미한 차이가 안 났습니다. 3회 측정이라 편차 안에 묻혔고,
+호스트가 Apple Silicon 이라 파싱 비용이 저사양 기기만큼 안 드러난 것으로 보입니다.
+Hermes 의 시작 시간 이점은 저사양 실기기에서 다시 재봐야 합니다. `[미검증]`
+
+```bash
+./gradlew assembleRelease -PabiFilters=arm64-v8a -PhermesEnabled=false
+```
+
 ### 시작 시간과 진입 시간
 
 Pixel 9 에뮬레이터(API 36, arm64), 호스트 맥은 Apple Silicon.
@@ -196,7 +240,6 @@ preload 를 켜면 첫 진입이 그만큼 당겨집니다(791 → 191ms, 디버
 
 - 실기기. 위 숫자는 전부 에뮬레이터입니다
 - RN 을 붙이기 전 호스트 앱만의 콜드 스타트(= 증가분)
-- Hermes 를 끄고 JSC 로 바꿨을 때의 크기와 시작 시간
 - iOS 의 시작 시간과 앱 크기. 시뮬레이터 빌드는 슬라이스가 여러 개 들어가서
   배포 크기와 비교가 안 됩니다. 실기기 아카이브로 다시 재야 합니다
 
@@ -231,6 +274,12 @@ RN 이 책임질지 한쪽으로 정해야 하고, 양쪽에서 각자 처리하
 **측정값을 렌더 본문에서 계산하면 측정이 안 됩니다.**
 "네이티브 호출 → 첫 렌더"를 렌더 본문에서 계산했더니 버튼을 누를 때마다 값이 바뀌었습니다.
 4172ms 로 시작해서 34960ms 가 됐습니다. `useState` 초기화 함수로 옮겨서 고정했습니다.
+
+**끌 수 없는 스위치를 스위치라고 적어 뒀습니다.**
+`hermesEnabled=false` 로 바꿀 수 있다고 README 에 써 놨는데, `app/build.gradle` 에
+`if (hermesEnabled) { hermes-android }` 만 있고 `else` 가 없었습니다. 끄면 JS 엔진이
+하나도 안 들어갑니다. 빌드는 멀쩡히 통과하고 앱을 켤 때 죽습니다.
+JSC 를 붙여서 실제로 빌드하고 돌려 본 뒤에야 확인됐습니다.
 
 **확인할 수 없는 데모는 데모가 아닙니다.**
 "테마 바꾸기" 버튼을 네이티브 첫 화면에 뒀는데, 누르는 시점에는 RN 화면이 떠 있지 않아

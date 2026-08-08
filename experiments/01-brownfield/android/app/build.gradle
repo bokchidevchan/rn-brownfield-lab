@@ -99,8 +99,16 @@ dependencies {
     // 버전을 안 적습니다. com.facebook.react 플러그인이 node_modules 의 RN 버전에 맞춰 고정합니다.
     implementation("com.facebook.react:react-android")
 
+    // JS 엔진. 둘 중 하나는 반드시 들어가야 합니다.
+    // "Hermes 를 끈다"는 건 엔진을 안 쓰는 게 아니라 JSC 로 바꾼다는 뜻입니다.
+    // else 를 빼먹으면 빌드는 통과하고 앱을 켤 때 죽습니다.
     if (hermesEnabled.toBoolean()) {
+        // 빌드 시 hermesc 가 JS 를 바이트코드로 미리 컴파일하고,
+        // 이 엔진이 그 바이트코드를 실행합니다.
         implementation("com.facebook.react:hermes-android")
+    } else {
+        // JSC 는 JS 텍스트를 그대로 받아서 앱 시작 시점에 파싱하고 컴파일합니다.
+        implementation("org.webkit:android-jsc:r250231")
     }
 
     implementation("androidx.appcompat:appcompat:1.7.0")
