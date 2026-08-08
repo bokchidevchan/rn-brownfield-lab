@@ -19,7 +19,11 @@ experiments/
 
 | | 내용 | 상태 |
 |---|---|---|
-| [01-brownfield](experiments/01-brownfield) | 진입점 구조, 인스턴스 공유, 네이티브 통신, APK 크기 | 빌드 검증 완료, 실행 시간 측정 전 |
+| [01-brownfield](experiments/01-brownfield) | 진입점 구조, 인스턴스 공유, 네이티브 통신, APK 크기 | 에뮬레이터/시뮬레이터 실행 검증 완료 |
+
+동작 원리 정리는 [01-brownfield/EXPLAINER.md](experiments/01-brownfield/EXPLAINER.md) 에
+있습니다. 바이트코드와 네이티브 바이너리의 차이, Hermes 의 컴파일러와 엔진 구분,
+브리지가 주고받는 것, 인스턴스 수명, OTA 와 스토어 정책을 다룹니다.
 
 ## 기록 규칙
 

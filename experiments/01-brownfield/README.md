@@ -26,10 +26,15 @@ Android 에뮬레이터(Pixel 9, API 36, arm64)와 iOS 시뮬레이터(iPhone 15
 - 인스턴스 공유 (화면을 바꿔 가며 마운트 카운터가 이어지는지)
 - Android 는 릴리스 빌드(번들 내장, Metro 없이)까지 실행 확인
 
+동작 원리와 설계 배경은 [EXPLAINER.md](EXPLAINER.md) 에 따로 정리했습니다.
+JS 가 네이티브 앱에 어떻게 붙는지, 브리지가 무엇을 주고받는지, 인스턴스 수명을 왜 설계해야
+하는지, OTA 가 스토어 정책 안에서 어디까지 되는지를 다룹니다.
+
 ## 구성
 
 ```
 package.json          JS 루트. android/ 와 ios/ 가 이 아래 node_modules 를 씁니다
+EXPLAINER.md          동작 원리와 설계 배경
 index.js              AppRegistry 에 화면 2개 등록
 js/
   screens/            RN 화면
