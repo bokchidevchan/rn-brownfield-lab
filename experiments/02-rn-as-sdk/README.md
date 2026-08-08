@@ -4,9 +4,9 @@
 여기서는 RN 부분을 배포 가능한 산출물로 빼고, 그걸 가져다 쓰는 앱을 따로 둡니다.
 
 ```
-rn-sdk/            RN 팀이 소유. AAR 을 만들어 배포합니다
+rn-sdk/            RN 팀이 소유. AAR 과 XCFramework 를 만들어 배포합니다
 consumer-android/  RN 을 모르는 순수 Kotlin 앱. node_modules 가 없습니다
-consumer-ios/      iOS 소비 앱
+consumer-ios/      RN 을 모르는 순수 Swift 앱. node_modules 가 없습니다
 ```
 
 기준: RN 0.76.9, Old Architecture, Hermes
@@ -116,7 +116,7 @@ app/build/outputs/logs/manifest-merger-debug-report.txt
 
 ## 실행
 
-### SDK 빌드와 배포
+### SDK 빌드와 배포 (Android)
 
 ```bash
 cd rn-sdk
@@ -140,6 +140,27 @@ cd consumer-android
 이 디렉토리에는 `node_modules` 도 Metro 설정도 없습니다.
 `npm` 을 한 번도 부르지 않습니다.
 
+### SDK 빌드와 배포 (iOS)
+
+```bash
+cd rn-sdk
+npm run bundle:ios               # 번들을 ios/RnSdk/Resources 로
+
+cd ios
+ruby scripts/generate_project.rb # .xcodeproj 를 다시 만들 때만
+pod install
+./scripts/build_xcframework.sh   # dist/ 에 두 개의 xcframework
+```
+
+### 소비 앱 (iOS)
+
+```bash
+cd consumer-ios
+ruby scripts/generate_xcodeproj.rb
+pod install
+open ShopApp.xcworkspace
+```
+
 ## 측정
 
 Pixel 9 에뮬레이터(API 36, arm64, RAM 4GB), 디버그 빌드.
@@ -160,6 +181,66 @@ Pixel 9 에뮬레이터(API 36, arm64, RAM 4GB), 디버그 빌드.
 가져오기 때문입니다. 그쪽 `libreactnative.so` 는 심볼이 안 벗겨져서 20.5MB 입니다.
 릴리스 변종은 6.5MB 입니다.
 
+## iOS: 산출물이 하나로 안 됩니다
+
+Android 는 AAR 하나였습니다. iOS 는 둘입니다.
+
+```
+RnSdkKit.xcframework   25 MB   우리 Swift 코드 + React pod 40여 개를 정적으로 흡수한 동적 프레임워크
+hermes.xcframework     35 MB   RN 이 미리 빌드해 배포하는 동적 프레임워크
+```
+
+hermes 를 흡수할 수 없는 이유는 이미 동적으로 배포되기 때문입니다.
+
+```
+Pods/hermes-engine/.../hermes.framework/hermes:
+  Mach-O 64-bit dynamically linked shared library
+```
+
+정적 병합(`libtool`)은 `.a` 만 다룹니다. 그래서 소비 앱이 둘 다 embed 해야 하고,
+podspec 이 그 둘을 함께 vendored_frameworks 로 묶습니다.
+소비 앱 입장에서는 여전히 `pod 'RnSdk'` 한 줄이고 node_modules 도 없습니다.
+
+### 만드는 과정에서 걸린 것
+
+Android 는 한 번에 됐는데 iOS 는 여섯 번 막혔습니다. 전부 빌드나 설치나 런타임 중
+서로 다른 단계에서 터졌고, 원인이 표면 메시지와 멀었습니다.
+
+**프레임워크 타깃은 브리징 헤더를 못 씁니다.**
+01 번에서 쓰던 방법이 그대로 막힙니다. `use_frameworks! :linkage => :static` 으로
+React pod 을 모듈로 만들고 Swift 에서 `import React` 를 씁니다.
+
+**`use_native_modules!` 가 실패합니다.**
+RN CLI 가 저장소를 "앱"이라고 가정하고 `android/app/build.gradle` 을 찾습니다.
+SDK 저장소는 `android/rnsdk` 라이브러리 모듈이라 파싱에 실패합니다.
+서드파티가 없으므로 경로를 직접 주고 넘어갑니다.
+
+**`ios/build` 를 지우면 안 됩니다.**
+빌드 스크립트가 그 디렉토리를 청소했는데, 거기가 `pod install` 이 만든 codegen 산출물
+(`build/generated/ios/FBReactNativeSpec`) 자리였습니다.
+
+**`.swiftinterface` 로 내부 의존이 새어 나갑니다.**
+`BUILD_LIBRARY_FOR_DISTRIBUTION` 이 만드는 텍스트 인터페이스에 `import React` 가
+실려 나가고, React 모듈이 없는 소비 앱에서 `no such module 'React'` 로 깨집니다.
+`@_implementationOnly import React` 로 숨깁니다. 공개 API 가 React 타입을 노출하지
+않아야 쓸 수 있는 방법입니다.
+
+**모듈 이름과 타입 이름이 같으면 안 됩니다.**
+둘 다 `RnSdk` 였더니 인터페이스에서 `RnSdk.RnSdk.Config` 로 풀리며
+`'RnSdk' is not a member type of class 'RnSdk.RnSdk'` 가 났습니다.
+모듈을 `RnSdkKit` 으로 바꾸고 공개 클래스는 `RnSdk` 로 뒀습니다.
+
+**프레임워크에 `Info.plist` 가 필요합니다.**
+`GENERATE_INFOPLIST_FILE` 을 빠뜨렸더니 xcframework 는 만들어지고 앱 빌드도 되는데
+**설치 단계**에서 거부됐습니다. 빌드가 아니라 설치에서 터져서 원인이 멀었습니다.
+
+**리소스는 자동으로 안 담깁니다.**
+Android 는 `src/main/assets` 에 파일만 두면 AAR 이 담아서 APK 로 병합합니다.
+iOS 는 Resources 빌드 페이즈에 명시해야 합니다. 빠뜨리면 빌드도 설치도 되고
+**런타임에** `main.jsbundle 을 찾지 못했습니다` 로 죽습니다.
+
+이 목록이 이 실험의 결론입니다. SDK 로 빼는 난이도가 두 플랫폼에서 대칭이 아닙니다.
+
 ## 확인한 것
 
 에뮬레이터에서 아래를 전부 눌러 봤습니다. 실기기에서는 돌려보지 않았습니다.
@@ -170,6 +251,18 @@ Pixel 9 에뮬레이터(API 36, arm64, RAM 4GB), 디버그 빌드.
 - 부분 삽입 뷰. `addView` 한 줄로 동작하고 인스턴스를 공유
 - 네이티브 → RN 테마 이벤트
 - `releaseMemory()` 로 인스턴스 파괴 후 재진입
+
+iOS 는 시뮬레이터(iPhone 15, iOS 17.5)에서 여기까지 확인했습니다.
+
+- `pod install` 이 의존성 1개로 끝남. node_modules 없이
+- 소비 앱 빌드 성공. 소스에 `React` 도 `RCT` 도 등장하지 않음
+- 앱에 `RnSdkKit.framework` 와 `hermes.framework` 두 개가 embed 됨
+- 앱 실행 후 RN 브리지 생성 성공. JS 번들을 프레임워크 리소스에서 로드
+  (`RnSdk.isRunning` 이 true, 화면에 "RN 인스턴스: 살아 있음")
+
+iOS 는 화면을 눌러 가며 각 기능을 확인하지는 못했습니다. 시뮬레이터 창을
+GUI 자동화로 잡지 못해서, 대신 `preloadOnInit` 을 켜고 브리지 생성과 번들 로드를
+로그와 화면으로 확인했습니다. Android 는 전 경로를 눌러 봤습니다.
 
 ## 이 저장소에 넣지 않은 것
 

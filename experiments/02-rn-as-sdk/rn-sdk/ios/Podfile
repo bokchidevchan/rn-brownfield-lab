@@ -1,0 +1,64 @@
+# SDK 를 빌드하기 위한 Podfile 입니다. 배포물이 아닙니다.
+# 소비 앱은 이 Podfile 을 쓰지 않고, 만들어진 xcframework 만 가져다 씁니다.
+
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
+
+# 01 번과 결정적으로 다른 두 줄입니다.
+#
+# 프레임워크 타깃은 브리징 헤더를 못 씁니다. Swift 에서 `import React` 를 쓰려면
+# React pod 이 모듈이어야 하고, 그러려면 use_frameworks! 가 필요합니다.
+# linkage 를 static 으로 두면 pod 들은 정적으로 빌드돼서
+# 우리 동적 프레임워크 안으로 흡수됩니다.
+ENV['USE_FRAMEWORKS'] = 'static'
+use_frameworks! :linkage => :static
+
+platform :ios, min_ios_version_supported
+prepare_react_native_project!
+
+# 어느 프로젝트에 통합할지 명시합니다.
+# 디렉토리에 .xcodeproj 가 하나뿐이면 생략해도 되지만, 모듈 이름을 바꾸는 과정에서
+# 옛 프로젝트가 남아 있으면 CocoaPods 가 고르지 못하고 멈춥니다.
+project 'RnSdkKit.xcodeproj'
+
+target 'RnSdkKit' do
+  # 01 번에는 여기 use_native_modules! 가 있었습니다. 여기서는 못 씁니다.
+  #
+  # 그 함수는 @react-native-community/cli 의 config 명령을 돌려서 서드파티 RN
+  # 라이브러리를 찾습니다. 그런데 CLI 는 저장소가 "앱" 레이아웃이라고 가정하고
+  # android/app/build.gradle 을 찾습니다. SDK 저장소는 android/rnsdk 라는
+  # 라이브러리 모듈이라 파싱에 실패합니다.
+  #
+  #   error Failed to build the app: No package name found. We couldn't parse the
+  #   namespace from neither your build.gradle[.kts] file at null nor your package
+  #   in the AndroidManifest at .../android/rnsdk/src/main/AndroidManifest.xml
+  #
+  # 이 SDK 에는 서드파티 RN 라이브러리가 없으므로 경로를 직접 줍니다.
+  # 라이브러리를 추가할 일이 생기면 Android 의 MainReactPackage 등록과 마찬가지로
+  # 여기도 손으로 pod 을 적어야 합니다. autolinking 을 잃는 대가입니다.
+  use_react_native!(
+    :path => '../node_modules/react-native',
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      '../node_modules/react-native',
+      :mac_catalyst_enabled => false
+    )
+
+    # XCFramework 로 배포하려면 우리 프레임워크뿐 아니라
+    # 정적으로 흡수되는 pod 들도 같은 설정으로 빌드돼야 합니다.
+    installer.pods_project.targets.each do |t|
+      t.build_configurations.each do |c|
+        c.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+        c.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
+        c.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+      end
+    end
+  end
+end

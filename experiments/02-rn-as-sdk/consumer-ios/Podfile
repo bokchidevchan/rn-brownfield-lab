@@ -1,0 +1,19 @@
+# 소비 앱의 Podfile 입니다. 01 번과 비교해 보세요.
+#
+# 01 번:
+#   require Pod::Executable.execute_command('node', ['-p', 'require.resolve(...)'])
+#   prepare_react_native_project!
+#   config = use_native_modules!
+#   use_react_native!(:path => config[:reactNativePath], ...)
+#   post_install { react_native_post_install(...) }
+#
+# 여기에는 node 호출도 react_native_pods.rb 도 없습니다.
+# 이 디렉토리에 node_modules 가 없어도 pod install 이 됩니다.
+
+platform :ios, '15.1'
+
+target 'ShopApp' do
+  # 이 한 줄이 RnSdk.xcframework 와 hermes.xcframework 를 함께 가져옵니다.
+  # 실제 배포라면 :path 대신 사내 podspec 저장소나 :http 로 받은 zip 이 들어갑니다.
+  pod 'RnSdk', :path => '../rn-sdk/ios'
+end

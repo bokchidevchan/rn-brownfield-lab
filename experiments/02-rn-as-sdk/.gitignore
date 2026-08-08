@@ -17,8 +17,24 @@ rn-sdk/android/rnsdk/src/main/res/raw/
 
 # iOS SDK 산출물
 rn-sdk/ios/build/
+rn-sdk/ios/.xcbuild/
+rn-sdk/ios/dist/
 rn-sdk/ios/Pods/
 rn-sdk/ios/*.xcframework/
+rn-sdk/ios/PrivacyInfo.xcprivacy
+
+# 각자 머신의 node 절대 경로가 들어갑니다. 저장소에 올리면 안 됩니다.
+.xcode.env.local
+
+# 모듈 이름을 RnSdkKit 으로 바꾸기 전에 만들어졌던 프로젝트 잔재입니다.
+# 생성 스크립트가 RnSdkKit 쪽만 만듭니다.
+rn-sdk/ios/RnSdk.xcodeproj/
+rn-sdk/ios/RnSdk.xcworkspace/
+rn-sdk/ios/*.xcworkspace/xcuserdata/
+rn-sdk/ios/*.xcodeproj/xcuserdata/
+rn-sdk/ios/*.xcodeproj/project.xcworkspace/
+
+# 배포 전에 npm run bundle:ios 로 만들어야 하는 파일입니다.
 rn-sdk/ios/RnSdk/Resources/main.jsbundle
 
 # 소비 앱

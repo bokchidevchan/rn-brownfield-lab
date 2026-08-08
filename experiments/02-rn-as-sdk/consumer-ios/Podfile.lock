@@ -1,0 +1,16 @@
+PODS:
+  - RnSdk (0.1.0)
+
+DEPENDENCIES:
+  - RnSdk (from `../rn-sdk/ios`)
+
+EXTERNAL SOURCES:
+  RnSdk:
+    :path: "../rn-sdk/ios"
+
+SPEC CHECKSUMS:
+  RnSdk: 21dacefbd61c039f1a187d9a6a11b335f36ce4c0
+
+PODFILE CHECKSUM: 35d3db275f1368ef7e50226d58ee5ac03e2510d5
+
+COCOAPODS: 1.15.2
