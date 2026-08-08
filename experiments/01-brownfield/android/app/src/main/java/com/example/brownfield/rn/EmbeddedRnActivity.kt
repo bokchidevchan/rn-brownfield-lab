@@ -3,6 +3,7 @@ package com.example.brownfield.rn
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Button
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.example.brownfield.HostApplication
@@ -25,6 +26,7 @@ import com.facebook.react.modules.core.DefaultHardwareBackBtnHandler
 class EmbeddedRnActivity : AppCompatActivity(), DefaultHardwareBackBtnHandler {
 
     private lateinit var reactRootView: ReactRootView
+    private var themeIndex = 0
 
     private val reactInstanceManager: ReactInstanceManager
         get() = (application as HostApplication).reactNativeHost.reactInstanceManager
@@ -50,6 +52,16 @@ class EmbeddedRnActivity : AppCompatActivity(), DefaultHardwareBackBtnHandler {
         )
 
         findViewById<FrameLayout>(R.id.rn_container).addView(reactRootView)
+
+        findViewById<Button>(R.id.embedded_change_theme).setOnClickListener {
+            themeIndex = (themeIndex + 1) % THEMES.size
+            // 이 화면에서는 RN 이 이미 떠 있으므로 리스너가 살아 있습니다.
+            // 바로 위 RN 영역의 "현재 테마" 가 그 자리에서 바뀝니다.
+            HostBridgeModule.emitThemeChanged(
+                reactInstanceManager.currentReactContext,
+                THEMES[themeIndex],
+            )
+        }
     }
 
     override fun onResume() {
@@ -81,6 +93,8 @@ class EmbeddedRnActivity : AppCompatActivity(), DefaultHardwareBackBtnHandler {
     }
 
     companion object {
+        private val THEMES = listOf("light", "dark", "sepia")
+
         fun intentFor(context: Context): Intent =
             Intent(context, EmbeddedRnActivity::class.java)
     }

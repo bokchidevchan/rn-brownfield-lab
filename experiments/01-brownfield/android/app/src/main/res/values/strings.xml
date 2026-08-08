@@ -11,9 +11,9 @@
     <string name="result_placeholder">RN 화면에서 돌아온 결과가 여기 표시됩니다.</string>
     <string name="result_received">RN 결과: %1$s (%2$s)</string>
     <string name="result_none">RN 화면이 결과 없이 닫혔습니다.</string>
-    <string name="theme_sent">테마 이벤트 전송: %1$s</string>
+    <string name="theme_sent">테마 이벤트 전송: %1$s — 받을 RN 화면이 떠 있지 않아 아무 일도 일어나지 않습니다. 부분 삽입 화면에서 눌러 보세요.</string>
     <string name="theme_dropped">RN 인스턴스가 아직 없어서 \'%1$s\' 이벤트는 버려졌습니다.</string>
 
     <string name="embedded_toolbar">네이티브 툴바</string>
-    <string name="embedded_footer">위아래는 네이티브 뷰, 가운데만 ReactRootView 입니다.</string>
+    <string name="embedded_footer">위아래는 네이티브 뷰, 가운데만 ReactRootView 입니다. 위 버튼을 누르면 RN 영역의 \'현재 테마\'가 바뀝니다.</string>
 </resources>

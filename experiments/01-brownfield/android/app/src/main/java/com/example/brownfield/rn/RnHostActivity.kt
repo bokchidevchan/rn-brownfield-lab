@@ -20,12 +20,23 @@ import com.facebook.react.defaults.DefaultReactActivityDelegate
  */
 class RnHostActivity : ReactActivity() {
 
-    override fun getMainComponentName(): String =
-        intent.getStringExtra(EXTRA_MODULE_NAME)
-            ?: error("moduleName 없이 RnHostActivity 를 띄웠습니다.")
-
+    /**
+     * moduleName 과 initialProps 를 Intent 에서 읽는 코드는 전부 delegate 안에 있습니다.
+     * Activity 쪽 getMainComponentName() 을 오버라이드하면 안 됩니다.
+     *
+     * ReactActivity 의 생성자가 필드 초기화로 createReactActivityDelegate() 를 부르는데,
+     * 그 시점에는 Activity 가 아직 attach 되기 전이라 intent 가 null 입니다.
+     * 거기서 intent 를 읽으면 화면을 띄우는 순간 NPE 로 죽습니다.
+     * delegate 의 getMainComponentName() / getLaunchOptions() 는 나중에
+     * delegate.onCreate() 에서 불리기 때문에 그때는 intent 가 준비돼 있습니다.
+     */
     override fun createReactActivityDelegate(): ReactActivityDelegate =
-        object : DefaultReactActivityDelegate(this, mainComponentName, false) {
+        object : DefaultReactActivityDelegate(this, PLACEHOLDER_COMPONENT_NAME, false) {
+
+            override fun getMainComponentName(): String =
+                intent.getStringExtra(EXTRA_MODULE_NAME)
+                    ?: error("moduleName 없이 RnHostActivity 를 띄웠습니다.")
+
             /**
              * 여기서 돌려주는 Bundle 이 JS 컴포넌트의 props 로 들어갑니다.
              *
@@ -41,6 +52,12 @@ class RnHostActivity : ReactActivity() {
     companion object {
         private const val EXTRA_MODULE_NAME = "extra_module_name"
         private const val EXTRA_INITIAL_PROPS = "extra_initial_props"
+
+        /**
+         * DefaultReactActivityDelegate 생성자가 moduleName 을 요구하는데,
+         * 위에서 getMainComponentName() 을 오버라이드해서 실제로는 쓰이지 않습니다.
+         */
+        private const val PLACEHOLDER_COMPONENT_NAME = ""
 
         /** index.js 의 AppRegistry.registerComponent 이름과 반드시 같아야 합니다. */
         const val MODULE_PRODUCT_DETAIL = "RNProductDetail"

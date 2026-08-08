@@ -94,6 +94,8 @@ final class MainViewController: UIViewController {
             userInfo: ["theme": theme]
         )
         resultLabel.text = "테마 이벤트 전송: \(theme)"
+            + " — 받을 RN 화면이 떠 있지 않아 아무 일도 일어나지 않습니다."
+            + " 부분 삽입 화면에서 눌러 보세요."
     }
 
     private func push(_ controller: UIViewController) {

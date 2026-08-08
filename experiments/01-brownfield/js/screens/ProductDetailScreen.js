@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {ScrollView, Text, View} from 'react-native';
 
 import {Button, Field, Section, styles} from '../components/ui';
@@ -19,8 +19,25 @@ import {
 export default function ProductDetailScreen(props) {
   const {productId = '(없음)', entryPoint = '(없음)', launchedAtMs = 0} = props;
 
-  // 첫 렌더에서 한 번만 계산해서, 이 화면이 몇 번째 마운트인지 기록합니다.
-  const instance = useMemo(() => markMount(), []);
+  /**
+   * 첫 렌더에서 한 번만 재고 그대로 붙잡아 둡니다.
+   *
+   * useState 의 초기화 함수는 정확히 한 번만 실행됩니다. 여기 있는 값을 렌더 본문에서
+   * 계산하면 아래 버튼을 누를 때마다 다시 계산돼서, 측정값이 아니라
+   * "화면을 연 지 얼마나 지났나"가 돼 버립니다.
+   */
+  const [firstRender] = useState(() => {
+    const {mountCount, contextAgeMs} = markMount();
+    return {
+      mountCount,
+      contextAgeMs,
+      // iOS 는 Date().timeIntervalSince1970 * 1000 으로 넘겨서 소수점이 딸려 옵니다.
+      // 안드로이드는 Long 이라 정수지만, 표시는 양쪽 같게 맞춥니다.
+      timeToFirstRenderMs:
+        launchedAtMs > 0 ? Math.round(Date.now() - launchedAtMs) : null,
+    };
+  });
+
   const [hostInfo, setHostInfo] = useState(null);
   const [themeEvents, setThemeEvents] = useState([]);
 
@@ -32,9 +49,6 @@ export default function ProductDetailScreen(props) {
     // 리스너가 쌓여서 같은 이벤트를 여러 번 처리하게 됩니다.
     return () => subscription.remove();
   }, []);
-
-  const timeToFirstRenderMs =
-    launchedAtMs > 0 ? Date.now() - launchedAtMs : null;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -51,10 +65,13 @@ export default function ProductDetailScreen(props) {
       </Section>
 
       <Section title="RN 인스턴스">
-        <Field label="이 컨텍스트에서 마운트된 횟수" value={instance.mountCount} />
-        <Field label="JS 컨텍스트 나이" value={`${instance.contextAgeMs}ms`} />
-        {timeToFirstRenderMs !== null && (
-          <Field label="네이티브 호출 → 첫 렌더" value={`${timeToFirstRenderMs}ms`} />
+        <Field label="이 컨텍스트에서 마운트된 횟수" value={firstRender.mountCount} />
+        <Field label="JS 컨텍스트 나이" value={`${firstRender.contextAgeMs}ms`} />
+        {firstRender.timeToFirstRenderMs !== null && (
+          <Field
+            label="네이티브 호출 → 첫 렌더"
+            value={`${firstRender.timeToFirstRenderMs}ms`}
+          />
         )}
         <Text style={styles.note}>
           뒤로 갔다가 다시 들어왔을 때 마운트 횟수가 계속 올라가면 인스턴스를 재사용하는
@@ -66,8 +83,10 @@ export default function ProductDetailScreen(props) {
       <Section title="네이티브 → RN 이벤트">
         {themeEvents.length === 0 ? (
           <Text style={styles.note}>
-            아직 받은 이벤트가 없습니다. 네이티브 화면의 "테마 바꾸기" 버튼을 누르면
-            여기에 쌓입니다.
+            이 화면은 전체 화면으로만 열려서, 네이티브 버튼을 같이 누를 방법이 없습니다.
+            그래서 여기는 계속 비어 있는 게 정상입니다. 이벤트가 도착하는 걸 보려면
+            네이티브 첫 화면에서 "부분 삽입"을 여세요. 리스너 등록과 해제 코드는
+            이 화면에도 똑같이 있습니다.
           </Text>
         ) : (
           themeEvents.map((theme, index) => (

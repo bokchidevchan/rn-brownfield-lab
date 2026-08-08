@@ -29,19 +29,38 @@ final class RnHostViewController: UIViewController {
         fatalError("스토리보드로 만들지 않습니다.")
     }
 
-    override func loadView() {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        navigationItem.title = moduleName
+        view.backgroundColor = .white
+
         // 여기서 ReactNativeManager.shared.bridge 에 처음 접근하면 그때 브리지가 만들어집니다.
         // preloadOnLaunch = false 일 때 첫 진입이 느린 이유가 이 한 줄입니다.
-        view = RCTRootView(
+        let rootView = RCTRootView(
             bridge: ReactNativeManager.shared.bridge,
             moduleName: moduleName,
             initialProperties: initialProperties
         )
-    }
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        navigationItem.title = moduleName
+        // RCTRootView 를 view 에 그대로 대입하지 않고 safe area 에 맞춰 붙입니다.
+        //
+        // 대입하면 RN 이 그리는 영역이 상태바와 네비게이션 바 아래까지 늘어나서
+        // 콘텐츠가 시계와 뒤로가기 버튼에 겹칩니다. 브라운필드에서 자주 나오는 증상인데,
+        // RN 화면만 따로 보면 멀쩡해 보여서 네이티브 껍데기를 씌운 뒤에야 드러납니다.
+        //
+        // 네이티브가 safe area 를 책임지는 쪽을 택했습니다. 반대로 RN 이 화면 끝까지
+        // 그리게 하려면 여기서 view 에 꽉 채우고 JS 에서 인셋을 처리해야 합니다.
+        // 둘 중 하나로 정해야지, 양쪽에서 각자 처리하면 여백이 두 번 들어갑니다.
+        rootView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(rootView)
+
+        NSLayoutConstraint.activate([
+            rootView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            rootView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            rootView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            rootView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+        ])
+
         // HostBridge 의 closeScreen / finishWithResult 가 닫을 대상을 등록합니다.
         RnScreenPresenter.shared.presentedController = self
     }
