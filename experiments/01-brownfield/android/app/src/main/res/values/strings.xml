@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">브라운필드 호스트</string>
+    <string name="native_badge">NATIVE (Kotlin)</string>
+
+    <string name="open_product_detail">RN 상품 상세 열기 (전체 화면, 결과 받기)</string>
+    <string name="open_settings">RN 설정 열기 (같은 인스턴스 재사용)</string>
+    <string name="open_embedded">네이티브 화면 안에 RN 부분 삽입</string>
+    <string name="change_theme">테마 바꾸기 (네이티브 → RN 이벤트)</string>
+
+    <string name="preload_state">RN 인스턴스 미리 생성: %1$s</string>
+    <string name="result_placeholder">RN 화면에서 돌아온 결과가 여기 표시됩니다.</string>
+    <string name="result_received">RN 결과: %1$s (%2$s)</string>
+    <string name="result_none">RN 화면이 결과 없이 닫혔습니다.</string>
+    <string name="theme_sent">테마 이벤트 전송: %1$s</string>
+    <string name="theme_dropped">RN 인스턴스가 아직 없어서 \'%1$s\' 이벤트는 버려졌습니다.</string>
+
+    <string name="embedded_toolbar">네이티브 툴바</string>
+    <string name="embedded_footer">위아래는 네이티브 뷰, 가운데만 ReactRootView 입니다.</string>
+</resources>

@@ -1,0 +1,95 @@
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
+
+/**
+ * 브라운필드에서 실제로 손대는 블록입니다.
+ *
+ * 그린필드 템플릿은 이 블록이 거의 비어 있습니다. 경로 기본값이 "android/ 의 부모가 JS 루트"라서
+ * 아무것도 안 써도 맞기 때문입니다. 기존 앱은 보통 그렇지 않습니다.
+ * (예: 저장소 루트가 네이티브 앱이고 JS 는 rn/ 아래에 따로 있는 구조)
+ *
+ * 그래서 여기서는 기본값과 같은 값이라도 전부 명시했습니다. 옮겨 붙일 때 어디를 고쳐야 하는지
+ * 이 목록이 그대로 체크리스트가 됩니다.
+ */
+react {
+    // package.json 과 node_modules 가 있는 디렉토리
+    root = file("../../")
+    reactNativeDir = file("../../node_modules/react-native")
+    codegenDir = file("../../node_modules/@react-native/codegen")
+    cliFile = file("../../node_modules/react-native/cli.js")
+
+    // AppRegistry.registerComponent 를 호출하는 파일
+    entryFile = file("../../index.js")
+
+    // 릴리스 빌드에서 JS 번들을 뽑아 assets 에 넣습니다. 디버그는 Metro 에 붙습니다.
+    bundleAssetName = "index.android.bundle"
+
+    // node_modules 의 RN 라이브러리를 이 앱 모듈에 연결합니다.
+    autolinkLibrariesWithApp()
+}
+
+android {
+    namespace "com.example.brownfield"
+    compileSdk rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+    ndkVersion rootProject.ext.ndkVersion
+
+    defaultConfig {
+        applicationId "com.example.brownfield"
+        minSdk rootProject.ext.minSdkVersion
+        targetSdk rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildFeatures {
+        buildConfig true
+        viewBinding true
+    }
+
+    buildTypes {
+        debug {
+            // 서명은 각자 로컬의 ~/.android/debug.keystore 를 씁니다.
+            // 키스토어 파일이나 signingConfig 는 저장소에 넣지 않습니다.
+            applicationIdSuffix ".debug"
+        }
+        release {
+            // 예제라 R8 은 꺼 둡니다. 실제 앱에서는 켜고,
+            // RN 이 요구하는 keep 규칙(proguard-rules.pro)을 확인해야 합니다.
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            // signingConfig 없음 → assembleRelease 는 unsigned APK 를 만듭니다.
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    packagingOptions {
+        // 기존 앱에 이미 다른 경로로 들어온 .so 가 있으면 여기서 충돌이 납니다.
+        // 브라운필드 도입 시 자주 보는 에러라 자리를 남겨 둡니다.
+        jniLibs {
+            useLegacyPackaging false
+        }
+    }
+}
+
+dependencies {
+    // 버전을 안 적습니다. com.facebook.react 플러그인이 node_modules 의 RN 버전에 맞춰 고정합니다.
+    implementation("com.facebook.react:react-android")
+
+    if (hermesEnabled.toBoolean()) {
+        implementation("com.facebook.react:hermes-android")
+    }
+
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("com.google.android.material:material:1.12.0")
+}

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  네이티브가 위아래를 그리고, 가운데만 RN 이 채웁니다.
+  ReactRootView 를 XML 에 직접 두지 않고 코드에서 붙이는 이유는
+  startReactApplication 을 호출해야 뷰가 살아나기 때문입니다.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#111114"
+        android:padding="16dp"
+        android:text="@string/embedded_toolbar"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <FrameLayout
+        android:id="@+id/rn_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#F5F5F7"
+        android:padding="12dp"
+        android:text="@string/embedded_footer"
+        android:textColor="#6B6B74"
+        android:textSize="12sp" />
+
+</LinearLayout>

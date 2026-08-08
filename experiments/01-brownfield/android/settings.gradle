@@ -1,0 +1,22 @@
+pluginManagement {
+    // RN 의 Gradle 플러그인은 npm 패키지 안에 소스로 들어 있습니다.
+    // 기존 앱에 붙일 때 처음 막히는 지점이 여기입니다. Maven 좌표가 아니라 composite build 라서
+    // settings.gradle 을 건드리지 않으면 com.facebook.react 플러그인을 못 찾습니다.
+    includeBuild("../node_modules/@react-native/gradle-plugin")
+}
+
+plugins {
+    id("com.facebook.react.settings")
+}
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+    // node_modules 를 훑어서 네이티브 코드가 있는 RN 라이브러리를 찾아 자동으로 include 합니다.
+    // 이 예제는 서드파티 RN 라이브러리가 없어서 결과가 비어 있지만, 호출은 남겨 둡니다.
+    // 라이브러리를 하나라도 추가하는 순간 필요해집니다.
+    ex.autolinkLibrariesFromCommand()
+}
+
+includeBuild("../node_modules/@react-native/gradle-plugin")
+
+rootProject.name = "BrownfieldHost"
+include ":app"
