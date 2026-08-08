@@ -15,6 +15,8 @@ android/app/src/main/res/raw/
 # iOS
 ios/Pods/
 ios/build/
+# pod install 이 만들어 내는 파일들
+ios/PrivacyInfo.xcprivacy
 ios/main.jsbundle
 ios/.xcode.env.local
 ios/*.xcworkspace/xcuserdata/

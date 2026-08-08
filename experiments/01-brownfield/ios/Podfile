@@ -1,0 +1,35 @@
+# RN 의 CocoaPods 헬퍼는 node_modules 안에 있습니다.
+# 기존 앱이 이미 Podfile 을 쓰고 있다면 이 require 한 줄과 target 안의 세 줄만 더하면 됩니다.
+#
+# __dir__ 은 ios/ 입니다. node_modules 는 그 위(01-brownfield/)에 있어서
+# require.resolve 가 상위로 올라가며 찾아냅니다.
+# JS 루트가 더 멀리 있는 구조라면 여기 경로를 바꿔야 합니다.
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
+
+platform :ios, min_ios_version_supported
+prepare_react_native_project!
+
+target 'BrownfieldHost' do
+  # node_modules 를 훑어서 네이티브 코드가 있는 RN 라이브러리를 찾습니다.
+  # settings.gradle 의 autolinkLibrariesFromCommand() 와 같은 역할입니다.
+  config = use_native_modules!
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    # app_path 는 package.json 이 있는 디렉토리입니다.
+    # 릴리스 빌드에서 JS 번들을 뽑을 때 이 경로를 기준으로 삼습니다.
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false
+    )
+  end
+end
