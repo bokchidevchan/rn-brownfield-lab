@@ -11,8 +11,15 @@
 ## 디렉토리
 
 ```
-experiments/    샘플 앱, 벤치마크, 측정 결과
+experiments/
+  01-brownfield/    네이티브 앱(Kotlin, Swift)에 RN 화면을 얹은 최소 구성
 ```
+
+## 실험
+
+| | 내용 | 상태 |
+|---|---|---|
+| [01-brownfield](experiments/01-brownfield) | 진입점 구조, 인스턴스 공유, 네이티브 통신, APK 크기 | 빌드 검증 완료, 실행 시간 측정 전 |
 
 ## 기록 규칙
 
