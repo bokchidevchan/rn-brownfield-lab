@@ -1,6 +1,6 @@
 # 05. Re.Pack + Module Federation: host 와 feature 로 나누기
 
-번들을 host(앱에 내장)와 feature(원격에서 다운로드)로 나누고, 에뮬레이터에서 실제로 무엇이 오가는지 측정한 실험입니다.
+번들을 host(앱에 내장)와 feature(원격에서 다운로드)로 나누고, 에뮬레이터에서 실제로 무엇이 오가는지 측정한 실험입니다. feature 는 두 개(장바구니, 프로필)를 만들어 한 호스트가 여러 원격을 로드하는 것까지 확인했습니다.
 
 03번에서 이 문제를 적어 뒀습니다. 화면 A 와 화면 B 를 별도 번들로 만들면 두 번들 각각에 프레임워크 JS 가 통째로 들어갑니다. 같은 것을 두 번 받고 두 번 파싱합니다. Module Federation 이 그 해법입니다. 호스트가 react 와 react-native 를 들고 있고, 원격 번들은 참조만 합니다.
 
@@ -13,13 +13,17 @@ Pixel 9 에뮬레이터(arm64), dev=false 번들 기준입니다. 서버가 로�
 | 항목 | 결과 |
 |---|---|
 | 호스트 내장 번들 | 934,280 bytes |
-| 피처 컨테이너 | 152,315 bytes |
-| 피처 화면 청크 | 3,173 bytes |
-| 첫 탭에서 다운로드 | 위 2건이 전부. react-native 재다운로드 없음 |
-| 탭 → 원격 화면 마운트 | 87~136ms |
+| 장바구니 피처 | 컨테이너 152,315 + 화면 청크 3,173 bytes |
+| 프로필 피처 | 컨테이너 152,894 + 화면 청크 3,459 bytes |
+| 첫 탭에서 다운로드 | 피처당 2건이 전부. react-native 재다운로드 없음 |
+| 탭 → 원격 화면 마운트 | 첫 피처 87~192ms, 두 번째 피처 71ms |
 | 두 번째 탭 | 4ms, 네트워크 요청 0건 |
+| 두 피처 동시 표시 | 한 화면에 두 원격이 같이 렌더, 원격 코드의 useState 정상 동작 |
+| 피처만 재배포 | 피처 재빌드 + 앱 재시작만으로 반영. APK 재설치 없음 |
 | 서버 죽은 상태에서 탭 | 크래시 없이 에러 UI + 다시 시도 버튼 |
 | 서버 복구 후 다시 시도 | 재다운로드 2건, 87ms 에 마운트 |
+
+두 번째 피처(71ms)가 첫 피처(192ms)보다 빨리 뜨는 이유는 공유 스코프 협상이 첫 로드에서 이미 끝나 있기 때문입니다. 원격 코드 안의 useState 가 정상 동작한다는 것은 React 인스턴스가 하나뿐이라는 증거입니다. 두 벌이면 "Invalid hook call" 로 깨집니다.
 
 "react-native 를 안 받는다"는 주장은 번들 크기만 봐서는 증명이 안 됩니다. 빌드하면 폴백용 vendors 청크(react-native 조각들)가 같이 생기기 때문입니다. 그래서 서버(`server/server.js`)가 요청을 전부 기록하게 만들고, 런타임에 실제로 내려간 목록으로 확인했습니다. 폴백 청크는 한 번도 요청되지 않았습니다.
 
@@ -32,13 +36,18 @@ Pixel 9 에뮬레이터(arm64), dev=false 번들 기준입니다. 서버가 로�
 ├─ host/           # RN 런타임 + 공유 의존성 + 셸 화면. 앱에 내장
 │  ├─ rspack.config.mjs      # ModuleFederationPluginV2, remotes 등록
 │  └─ src/
-│     ├─ HostScreen.js       # import('featureCart/CartScreen') 가 경계
+│     ├─ HostScreen.js       # FEATURES 목록과 import() 경계
 │     ├─ scriptManager.js    # 조각을 어디서 받을지 답하는 곳
 │     └─ mfFallbackPlugin.js # 원격 로드 실패를 크래시 대신 값으로
-├─ feature-cart/   # 원격 배포되는 피처. exposes 로 화면을 내놓음
-├─ server/         # 정적 서버 + 요청 로그(측정 도구)
-└─ android/        # 소비 앱. 번들 생성은 Gradle 에 안 맡김
+├─ feature-cart/    # 원격 피처 1. exposes 로 화면을 내놓음
+├─ feature-profile/ # 원격 피처 2. 다른 팀이 만든다고 가정한 화면
+├─ server/          # 정적 서버 + 요청 로그(측정 도구)
+└─ android/         # 소비 앱. 번들 생성은 Gradle 에 안 맡김
 ```
+
+피처를 하나 추가하는 비용은 이렇습니다. 피처 쪽은 feature-cart 를 복사해 rspack 설정의 name, filename, exposes 세 값을 바꾸는 게 전부입니다. 호스트 쪽은 remotes 에 주소 한 줄, HostScreen 의 FEATURES 목록에 항목 하나, scriptManager 의 컨테이너 목록에 이름 하나. 서버(CDN 역할)는 이름 → 디렉토리 매핑 한 줄입니다. 호스트를 재배포해야 하는 변경은 remotes 와 FEATURES 뿐이고, 피처 내용의 변경은 피처 재빌드로 끝납니다.
+
+주의할 이름 규칙이 하나 있습니다. 피처의 package.json name 에서 webpack 전역 변수(webpackChunkfeature_cart 같은)가 나오므로, 피처끼리 package.json name 이 겹치면 한 호스트 안에서 전역이 충돌합니다.
 
 앱이 켜지면 호스트 번들만 파싱합니다. "장바구니 열기"를 누르는 순간 `import()` 가 실행되고, 컨테이너를 받아 초기화하면서 공유 스코프로 호스트의 react 를 넘겨주고, 화면 청크를 받아 렌더합니다. React 인스턴스가 하나라는 게 중요합니다. 두 벌이 로드되면 훅이 깨지고, RN 은 네이티브 모듈 레지스트리가 런타임 하나를 전제하기 때문에 웹보다 더 심하게 깨집니다.
 
@@ -99,8 +108,9 @@ host / feature 분리가 목표일 때 검토할 수 있는 다른 길들입니�
 cd host && npm install
 cd ../feature-cart && npm install
 
-# 2. 피처 번들 (컨테이너 + 청크가 build/generated/android/ 에 생김)
+# 2. 피처 번들 (컨테이너 + 청크가 각 build/generated/android/ 에 생김)
 cd feature-cart && npm run bundle:android
+cd ../feature-profile && npm run bundle:android
 
 # 3. 호스트 번들 → 앱 assets 로 복사
 cd ../host && npm run bundle:android
@@ -121,4 +131,4 @@ curl localhost:4100/__log
 - iOS 판은 만들지 않았습니다. Re.Pack 설정은 플랫폼 공통이고 ScriptManager 도 iOS 를 지원하므로 구조는 같지만, 이 실험의 수치는 Android 에뮬레이터 것입니다.
 - 서버가 로컬이라 다운로드 시간이 실서비스보다 낙관적입니다. 87~136ms 라는 숫자는 "파싱과 초기화 비용"에 가깝고, 실제로는 CDN 왕복이 더해집니다.
 - 캐시를 끄고 측정했습니다(`cache: false`). 실제 앱에서는 켜야 하고, 켜면 두 번째 실행부터는 첫 탭도 네트워크를 안 탑니다.
-- 피처가 하나뿐입니다. 피처가 여럿일 때의 공유 스코프 버전 충돌(피처 A 는 lib@1, B 는 lib@2)은 다루지 않았습니다.
+- 두 피처가 공유 의존성을 같은 버전으로 씁니다. 버전이 어긋날 때(피처 A 는 lib@1, B 는 lib@2)의 공유 스코프 충돌은 다루지 않았습니다.

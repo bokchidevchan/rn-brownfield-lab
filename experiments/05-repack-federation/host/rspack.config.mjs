@@ -60,6 +60,8 @@ export default (env) => {
         remotes: {
           featureCart:
             'featureCart@http://10.0.2.2:4100/android/featureCart/featureCart.container.js.bundle',
+          featureProfile:
+            'featureProfile@http://10.0.2.2:4100/android/featureProfile/featureProfile.container.js.bundle',
         },
 
         /**

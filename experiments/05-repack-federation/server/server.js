@@ -20,11 +20,21 @@ const PORT = 4100;
 /**
  * Re.Pack 의 bundle 명령은 `--bundle-output` 으로 준 경로에 엔트리 번들만 놓고,
  * 나머지 청크와 mf-manifest.json 은 `--assets-dest` 쪽 generated/<platform>/ 에 놓습니다.
- * 원격 번들에서 정작 필요한 것은 후자입니다. 여기를 서빙 루트로 잡습니다.
+ * 원격 번들에서 정작 필요한 것은 후자입니다.
+ *
+ * URL 의 원격 이름을 피처 디렉토리로 매핑합니다. 실서비스라면 이 자리가
+ * CDN 의 경로 규칙(팀별 버킷 등)이 됩니다.
  */
-const ROOT = path.join(
-  __dirname, '..', 'feature-cart', 'build', 'generated', 'android',
-);
+const FEATURE_DIRS = {
+  featureCart: 'feature-cart',
+  featureProfile: 'feature-profile',
+};
+
+function rootFor(featureName) {
+  const dir = FEATURE_DIRS[featureName];
+  if (!dir) return null;
+  return path.join(__dirname, '..', dir, 'build', 'generated', 'android');
+}
 
 let served = [];
 
@@ -42,8 +52,15 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // /android/featureCart/xxx  ->  <ROOT>/xxx
-  const full = path.join(ROOT, path.basename(urlPath));
+  // /android/<원격이름>/<파일>  ->  <피처 디렉토리>/build/generated/android/<파일>
+  const m = urlPath.match(/^\/android\/([^/]+)\/(.+)$/);
+  const root = m && rootFor(m[1]);
+  if (!root) {
+    console.log(`404  ${urlPath} (매핑 없음)`);
+    res.writeHead(404).end('not found');
+    return;
+  }
+  const full = path.join(root, path.basename(m[2]));
 
   fs.readFile(full, (err, data) => {
     if (err) {
@@ -65,7 +82,7 @@ const server = http.createServer((req, res) => {
 // 10.0.2.2 NAT 가 IPv4 로만 붙는 환경에서 연결이 조용히 실패할 수 있습니다.
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`원격 번들 서버: http://localhost:${PORT}`);
-  console.log(`서빙 루트: ${ROOT}`);
+  console.log(`서빙 피처: ${Object.keys(FEATURE_DIRS).join(', ')}`);
   console.log('에뮬레이터에서는 http://10.0.2.2:4100 으로 접근합니다.');
   console.log('실제로 내려간 것 확인: curl localhost:4100/__log');
 });

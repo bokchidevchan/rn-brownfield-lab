@@ -33,10 +33,10 @@ ScriptManager.shared.addResolver(async (scriptId, caller) => {
   // import() 경로에서는 Re.Pack 의 내장 리졸버가 remotes 설정의 entry 주소로
   // 처리해 주지만, ScriptManager.loadScript 를 직접 부르는 재시도 경로에는
   // 그 문맥이 없어서 이 매핑이 없으면 "Reference URL is missing" 이 납니다.
-  const url =
-    scriptId === 'featureCart'
-      ? `${REMOTE_BASE}/android/featureCart/featureCart.container.js.bundle`
-      : `${REMOTE_BASE}/android/${caller ?? 'featureCart'}/${scriptId}.chunk.bundle`;
+  const CONTAINERS = ['featureCart', 'featureProfile'];
+  const url = CONTAINERS.includes(scriptId)
+    ? `${REMOTE_BASE}/android/${scriptId}/${scriptId}.container.js.bundle`
+    : `${REMOTE_BASE}/android/${caller ?? 'featureCart'}/${scriptId}.chunk.bundle`;
 
   return {
     // 두 번째 인자가 없으면 getRemoteURL 이 webpack 컨텍스트의 확장자 규칙을
