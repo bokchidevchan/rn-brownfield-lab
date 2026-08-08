@@ -1,0 +1,30 @@
+# JS
+node_modules/
+.metro-health-check*
+*.log
+
+# 산출물
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+
+# 신아키텍처는 codegen 결과를 C++ 로 빌드합니다. CMake 산출물이 여기 쌓입니다.
+# 01 번에서는 없던 디렉토리라 gitignore 에 빠져 있었습니다.
+android/app/.cxx/
+android/app/src/main/assets/index.android.bundle
+android/app/src/main/res/drawable-*/
+android/app/src/main/res/raw/
+
+# 측정 결과는 README 에 정리해서 남깁니다. 원본 로그는 올리지 않습니다.
+bench-*.txt
+
+# 서명 관련은 저장소에 넣지 않습니다.
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+*.cer
+keystore.properties
+.env
+.env.*

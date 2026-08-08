@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">신구 아키텍처 비교</string>
+    <string name="status">아키텍처: %1$s / 엔진: %2$s</string>
+    <string name="warm_engine">엔진 미리 띄우기</string>
+    <string name="open_single">서피스 1개 띄우기</string>
+    <string name="open_dual">서피스 2개 띄우기</string>
+</resources>

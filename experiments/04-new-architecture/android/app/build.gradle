@@ -1,0 +1,66 @@
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
+
+react {
+    root = file("../../rn")
+    reactNativeDir = file("../../rn/node_modules/react-native")
+    codegenDir = file("../../rn/node_modules/@react-native/codegen")
+    cliFile = file("../../rn/node_modules/react-native/cli.js")
+    entryFile = file("../../rn/index.js")
+    bundleAssetName = "index.android.bundle"
+    autolinkLibrariesWithApp()
+}
+
+android {
+    namespace "com.example.arch"
+    compileSdk rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+    ndkVersion rootProject.ext.ndkVersion
+
+    defaultConfig {
+        applicationId "com.example.arch"
+        minSdk rootProject.ext.minSdkVersion
+        targetSdk rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+
+        // 네이티브 코드가 어느 경로를 탈지 정할 때 씁니다.
+        // RN 의 newArchEnabled 는 빌드 시스템 쪽 플래그라서, 앱 코드에서 읽으려면
+        // 이렇게 BuildConfig 로 한 번 내려 줘야 합니다.
+        buildConfigField("boolean", "IS_NEW_ARCH", newArchEnabled)
+
+        if (project.hasProperty("abiFilters")) {
+            ndk { abiFilters.addAll(project.property("abiFilters").split(",")) }
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+        viewBinding true
+    }
+
+    buildTypes {
+        debug { applicationIdSuffix ".debug" }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions { jvmTarget = "17" }
+}
+
+dependencies {
+    implementation("com.facebook.react:react-android")
+    if (hermesEnabled.toBoolean()) {
+        implementation("com.facebook.react:hermes-android")
+    }
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
+}

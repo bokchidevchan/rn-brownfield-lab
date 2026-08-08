@@ -15,6 +15,7 @@ experiments/
   01-brownfield/    네이티브 앱(Kotlin, Swift)에 RN 화면을 얹은 최소 구성
   02-rn-as-sdk/     RN 을 배포 가능한 SDK 로 빼고, 그걸 쓰는 앱을 따로 둔 구성
   03-webview-vs-rn/ 같은 화면을 웹뷰와 RN 으로 만들어 나란히 측정
+  04-new-architecture/ 구아키텍처와 신아키텍처를 같은 앱에서 비교
 ```
 
 ## 실험
@@ -24,6 +25,7 @@ experiments/
 | [01-brownfield](experiments/01-brownfield) | 진입점 구조, 인스턴스 공유, 네이티브 통신, APK 크기 | 에뮬레이터/시뮬레이터 실행 검증 완료 |
 | [02-rn-as-sdk](experiments/02-rn-as-sdk) | RN 을 AAR 과 XCFramework 로 빼서 배포. 소비 앱은 Node 없이 사용 | 양쪽 실행 검증 완료 |
 | [03-webview-vs-rn](experiments/03-webview-vs-rn) | 같은 화면을 웹뷰와 RN 으로 만들어 진입 시간, 앱 용량, 코드량 비교 | Android, iOS 측정 완료 |
+| [04-new-architecture](experiments/04-new-architecture) | 같은 앱을 아키텍처 플래그만 바꿔 두 번 빌드해 비교. ReactHost 와 Surface | Android 측정 완료 |
 
 동작 원리 정리는 [01-brownfield/EXPLAINER.md](experiments/01-brownfield/EXPLAINER.md) 에
 있습니다. 바이트코드와 네이티브 바이너리의 차이, Hermes 의 컴파일러와 엔진 구분,

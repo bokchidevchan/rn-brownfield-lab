@@ -1,0 +1,25 @@
+buildscript {
+    ext {
+        // RN 0.76.9 가 요구하는 조합입니다. 기존 앱 버전이 이보다 낮으면
+        // 먼저 이 값들을 올리는 게 브라운필드 도입의 실제 첫 작업이 됩니다.
+        buildToolsVersion = "35.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 35
+        targetSdkVersion = 34
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "2.0.21"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // AGP 버전은 react-native-gradle-plugin 이 고정합니다(현재 8.6.0).
+        // 여기서 명시적으로 버전을 박으면 충돌하기 쉬워서 비워 둡니다.
+        classpath("com.android.tools.build:gradle")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+    }
+}
+
+apply plugin: "com.facebook.react.rootproject"

@@ -1,0 +1,19 @@
+pluginManagement {
+    includeBuild("../rn/node_modules/@react-native/gradle-plugin")
+}
+
+plugins {
+    id("com.facebook.react.settings")
+}
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+    ex.autolinkLibrariesFromCommand(
+        ["node", "../rn/node_modules/react-native/cli.js", "config"],
+        file("../rn"),
+    )
+}
+
+includeBuild("../rn/node_modules/@react-native/gradle-plugin")
+
+rootProject.name = "NewArchBench"
+include ":app"

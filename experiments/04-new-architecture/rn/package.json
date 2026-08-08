@@ -1,0 +1,28 @@
+{
+  "name": "arch-rn",
+  "version": "0.1.0",
+  "private": true,
+  "description": "신구 아키텍처를 나란히 재기 위한 RN 화면",
+  "scripts": {
+    "start": "react-native start",
+    "bundle:android": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
+    "bundle:ios": "react-native bundle --platform ios --dev false --entry-file index.js --bundle-output ios/main.jsbundle --assets-dest ios"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-native": "0.76.9"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.25.3",
+    "@babel/runtime": "^7.25.0",
+    "@react-native-community/cli": "15.1.3",
+    "@react-native-community/cli-platform-android": "15.1.3",
+    "@react-native-community/cli-platform-ios": "15.1.3",
+    "@react-native/babel-preset": "0.76.9",
+    "@react-native/metro-config": "0.76.9"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
