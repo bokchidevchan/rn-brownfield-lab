@@ -19,6 +19,7 @@ experiments/
   05-repack-federation/ Re.Pack 으로 번들을 host 와 feature 로 나눠 원격 로드
   06-granite/       Toss granite 적용, 05 와의 차이 정리
   07-deployment/    원격 번들의 카나리, 블루그린 배포와 롤백
+  08-bundlers-hermes/ Metro, webpack, esbuild 실측 비교와 Hermes 의 층 구분
 ```
 
 ## 실험
@@ -32,6 +33,7 @@ experiments/
 | [05-repack-federation](experiments/05-repack-federation) | Module Federation 으로 host / feature 분리. 멀티 피처, 실패 처리, 재시도까지 | Android, iOS 검증 완료 |
 | [06-granite](experiments/06-granite) | Toss granite 적용. 셸과 공유 번들 구조, Re.Pack 직접 조립과의 비교 | Android 에뮬레이터 검증 완료 |
 | [07-deployment](experiments/07-deployment) | 카나리와 블루그린. 배포 상태 파일, 결정적 버킷, 전환과 롤백 | Android 에뮬레이터 검증 완료 |
+| [08-bundlers-hermes](experiments/08-bundlers-hermes) | 같은 앱을 webpack, esbuild, Metro, Rspack 으로 빌드해 실측. Hermes 는 엔진 층 | 웹 헤드리스, 번들 실측 완료 |
 
 동작 원리 정리는 [01-brownfield/EXPLAINER.md](experiments/01-brownfield/EXPLAINER.md) 에
 있습니다. 바이트코드와 네이티브 바이너리의 차이, Hermes 의 컴파일러와 엔진 구분,

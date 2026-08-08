@@ -1,0 +1,13 @@
+{
+  "name": "bundler-bench-metro",
+  "version": "0.1.0",
+  "private": true,
+  "description": "같은 RN 소스를 Metro 로 번들합니다. react-native.config.js 가 없으므로 기본 bundle 명령이 Metro 로 갑니다",
+  "scripts": {
+    "bundle:android": "mkdir -p src && cp ../src/App.js src/App.js && react-native bundle --platform android --dev false --entry-file index.js --bundle-output build/index.android.bundle --assets-dest build"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-native": "0.76.9"
+  }
+}

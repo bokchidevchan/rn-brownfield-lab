@@ -1,0 +1,8 @@
+node_modules/
+dist-webpack/
+dist-esbuild/
+build/
+# variant 의 src 는 번들 스크립트가 ../src 에서 복사해 오는 생성물입니다
+rn-app/metro-variant/src/
+rn-app/repack-variant/src/
+*.log
