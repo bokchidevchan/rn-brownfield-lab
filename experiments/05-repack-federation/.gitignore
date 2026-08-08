@@ -1,0 +1,4 @@
+# 호스트 번들 산출물이 assets 로 복사됩니다. 생성물이라 커밋하지 않습니다.
+# 재현: host 에서 npm run bundle:android 후 build/index.android.bundle 을 여기로 복사.
+android/app/src/main/assets/*.bundle
+android/.gradle/

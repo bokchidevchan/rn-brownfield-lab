@@ -1,0 +1,79 @@
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
+
+/**
+ * 01~04 번과 결정적으로 다른 점이 있습니다.
+ *
+ * `react {}` 블록에서 번들 생성을 맡기지 않습니다.
+ * 그 블록은 Metro 를 부르는데, 우리는 Rspack 을 씁니다.
+ * 번들은 host/ 에서 `react-native bundle` 로 미리 만들어 assets 에 넣습니다.
+ *
+ * autolinking 은 여전히 필요합니다. Re.Pack 의 ScriptManager 가 네이티브 모듈이라서요.
+ */
+react {
+    root = file("../../host")
+    reactNativeDir = file("../../host/node_modules/react-native")
+    codegenDir = file("../../host/node_modules/@react-native/codegen")
+    cliFile = file("../../host/node_modules/react-native/cli.js")
+    entryFile = file("../../host/index.js")
+    autolinkLibrariesWithApp()
+
+    /**
+     * bundleCommand 는 기본값이 "bundle" 입니다.
+     * host/react-native.config.js 가 Re.Pack 의 bundle 명령을 등록해 뒀으므로,
+     * Gradle 이 릴리스 빌드에서 부르는 `react-native bundle` 이 Metro 가 아니라
+     * Rspack 으로 갑니다. 따로 막을 필요가 없습니다.
+     *
+     * debuggableVariants 기본값이 ["debug"] 라서 디버그 빌드는 번들을 만들지 않습니다.
+     * 그래서 디버그로 돌리려면 assets 에 번들을 직접 넣어 둬야 합니다.
+     *
+     * bundleInDebug / bundleInRelease 는 RN 0.71 이전 속성이라 지금은 없습니다.
+     * 옛 문서를 보고 쓰면 "Could not set unknown property" 로 실패합니다.
+     */
+}
+
+android {
+    namespace "com.example.mf"
+    compileSdk rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
+    ndkVersion rootProject.ext.ndkVersion
+
+    defaultConfig {
+        applicationId "com.example.mf"
+        minSdk rootProject.ext.minSdkVersion
+        targetSdk rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        if (project.hasProperty("abiFilters")) {
+            ndk { abiFilters.addAll(project.property("abiFilters").split(",")) }
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+        viewBinding true
+    }
+
+    buildTypes {
+        debug { applicationIdSuffix ".debug" }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions { jvmTarget = "17" }
+}
+
+dependencies {
+    implementation("com.facebook.react:react-android")
+    implementation("com.facebook.react:hermes-android")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
+}
