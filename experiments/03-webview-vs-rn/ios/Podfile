@@ -1,0 +1,44 @@
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', File.join(__dir__, '..', 'rn')]).strip
+
+platform :ios, min_ios_version_supported
+prepare_react_native_project!
+
+RN_ROOT = File.expand_path(File.join(__dir__, '..', 'rn'))
+
+# use_native_modules! 는 경로가 아니라 "실행할 명령"을 받습니다.
+# 기본값은 Podfile 이 있는 디렉토리(ios/)에서 CLI 를 돌리는데,
+# 여기는 JS 루트가 ../rn 이라 거기서 돌게 명령을 직접 만들어 넘깁니다.
+#
+# 그냥 경로를 넘기면 이렇게 거부합니다.
+#   [!] Expected a list_native_modules! to be called with a config command
+#
+# chdir 로 옮긴 뒤에 돌리면 CLI 가 rn/react-native.config.js 를 읽고,
+# 거기 적힌 대로 android/ 와 ios/ 위치를 찾아냅니다.
+RN_CONFIG_COMMAND = [
+  'node',
+  '-e',
+  "process.chdir('#{RN_ROOT}');" \
+  "process.argv=['', '', 'config'];" \
+  "require('#{RN_ROOT}/node_modules/@react-native-community/cli').run()",
+].freeze
+
+target 'Bench' do
+  config = use_native_modules!(RN_CONFIG_COMMAND)
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :app_path => "#{__dir__}/../rn"
+  )
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false
+    )
+  end
+end

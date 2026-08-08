@@ -3,27 +3,37 @@
 같은 앱 안에 같은 화면을 웹뷰로 한 번, RN 으로 한 번 만들어서 나란히 쟀습니다.
 
 ```
-web/       localhost:3000 으로 뜨는 페이지
-rn/        같은 화면의 RN 버전
-android/   두 방식을 모두 띄우고 시간을 재는 호스트 앱
-bench.sh   조건별 반복 측정
+web/            localhost:3000 으로 뜨는 페이지
+rn/             같은 화면의 RN 버전
+android/        두 방식을 모두 띄우고 시간을 재는 호스트 앱
+ios/            같은 앱의 iOS 판
+bench.sh        Android 반복 측정
+bench-ios.sh    iOS 반복 측정
 ```
 
 기준: RN 0.76.9, Old Architecture, Hermes
-측정: Pixel 9 에뮬레이터(API 36, arm64, RAM 4GB), 조건당 10회
+측정: Pixel 9 에뮬레이터(API 36, arm64, RAM 4GB), iPhone 15 시뮬레이터(iOS 17.5)
+조건당 10회, 중앙값
 최종 확인일: 2026-08-08
+
+**iOS 숫자는 정확하지 않습니다.** 시뮬레이터는 호스트 맥의 CPU 로 돌고 WebKit 과 Hermes 가
+실기기와 다른 환경에서 실행됩니다. 절대값을 인용하지 마세요. 조건 사이의 방향만 보면 됩니다.
+Android 도 에뮬레이터라 같은 한계가 있지만, 그쪽은 arm64 시스템 이미지라 조금 낫습니다.
 
 ## 결론 먼저
 
 **릴리스 빌드에서는 RN 이 두 조건 모두 빨랐고, 디버그 빌드에서는 웹뷰가 두 조건 모두 빨랐습니다.**
 빌드 타입 하나로 결론이 뒤집힙니다.
 
-| 탭 → 첫 페인트 (중앙값) | debug | release |
-|---|---|---|
-| 웹뷰, 프리워밍 없음 | 544 ms | 356 ms |
-| 웹뷰, 프리워밍 있음 | 225 ms | 176 ms |
-| RN, preload 없음 | 767 ms | 246 ms |
-| RN, preload 있음 | 484 ms | 143 ms |
+| 탭 → 첫 페인트 (중앙값) | Android debug | Android release | iOS release |
+|---|---|---|---|
+| 웹뷰, 프리워밍 없음 | 544 ms | 356 ms | 358 ms |
+| 웹뷰, 프리워밍 있음 | 225 ms | 176 ms | 295 ms |
+| RN, preload 없음 | 767 ms | 246 ms | 175 ms |
+| RN, preload 있음 | 484 ms | 143 ms | 114 ms |
+
+iOS 는 시뮬레이터라 절대값을 믿으면 안 되지만, 릴리스 Android 와 방향은 같습니다.
+RN 이 두 조건 모두 빨랐고 프리워밍이 양쪽 다 효과가 있었습니다.
 
 디버그에서 RN 이 불리한 이유는 분명합니다. Gradle 이 `react-android` 의 **debug 변종**을
 가져오는데 그쪽 `libreactnative.so` 는 심볼이 안 벗겨져서 20.5MB 입니다. 여기에
@@ -87,12 +97,23 @@ RN 쪽 큰 덩어리는 `libreactnative.so` 6.5MB, `libhermes.so` 2.3MB,
 
 | | 프리워밍 없음 | 있음 | 감소 |
 |---|---|---|---|
-| 웹뷰 (release) | 356 ms | 176 ms | 51% |
-| RN (release) | 246 ms | 143 ms | 42% |
+| 웹뷰 (Android release) | 356 ms | 176 ms | 51% |
+| RN (Android release) | 246 ms | 143 ms | 42% |
+| 웹뷰 (iOS) | 358 ms | 295 ms | 18% |
+| RN (iOS) | 175 ms | 114 ms | 35% |
 
-웹뷰 프리워밍에서 비싼 것은 `WebView` 뷰 객체가 아니라 그 뒤의 Chromium 초기화입니다.
-provider 로딩과 렌더러 프로세스 기동이 프로세스 단위로 한 번 일어나서, 아무 WebView 나
-하나 만들어 두면 그 뒤로 싸집니다. `WebViewWarmer.kt` 가 그 코드입니다.
+웹뷰 프리워밍에서 비싼 것은 뷰 객체가 아니라 그 뒤의 브라우저 엔진 초기화입니다.
+Android 는 WebView provider 로딩과 렌더러 프로세스 기동이 프로세스 단위로 한 번
+일어나서, 아무 WebView 나 하나 만들어 두면 그 뒤로 싸집니다.
+
+**같은 프리워밍인데 iOS 는 효과가 훨씬 작았습니다(18% vs 51%).** iOS 는 `WKProcessPool`
+을 명시적으로 공유해야 콘텐츠 프로세스를 재사용합니다. 이 실험은 pool 을 넘겨 뒀는데도
+차이가 작습니다. WebKit 쪽 초기화 비용이 Chromium 만큼 크지 않거나, 시뮬레이터에서
+호스트 프로세스가 이미 따뜻해서 그럴 수 있습니다. 원인은 확인 못 했습니다.
+같은 이름의 최적화라도 플랫폼마다 효과가 다르다는 것까지가 이 실험으로 말할 수 있는
+범위입니다.
+
+프리워밍 코드는 `android/.../web/WebViewWarmer.kt` 와 `ios/Bench/WebViewWarmer.swift` 입니다.
 
 이 실험에서는 웹뷰 프리워밍을 **엔진까지만** 했습니다. 페이지까지 미리 받아 두면
 화면이 이미 그려진 상태라 "탭 → 첫 페인트"가 0 에 가깝게 나오는데, RN preload
@@ -310,6 +331,19 @@ cd .. && ./bench.sh 10
 릴리스로 재려면 `assembleRelease` 후 서명해서 설치하고
 `BENCH_PKG=com.example.bench ./bench.sh 10` 으로 돌립니다.
 
+iOS 는 이렇습니다.
+
+```bash
+cd rn && npm run bundle:ios
+cd ../ios && ruby scripts/generate_xcodeproj.rb && pod install
+xcodebuild -workspace Bench.xcworkspace -scheme Bench -configuration Release \
+  -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+  -derivedDataPath <경로> build CODE_SIGNING_ALLOWED=NO
+xcrun simctl install <udid> <경로>/Build/Products/Release-iphonesimulator/Bench.app
+
+cd .. && UDID=<udid> ./bench-ios.sh 10
+```
+
 ## 측정 방법에 대해
 
 두 방식을 같은 자로 재는 게 이 실험의 절반입니다.
@@ -324,7 +358,18 @@ JS 가 알려 온 시각입니다. 웹뷰는 `requestAnimationFrame` 두 번, RN
 
 화면 구성도 맞췄습니다. 섹션 4개, 행 6개, 버튼 2개로 같습니다.
 
-측정은 logcat 으로 뽑습니다. 스크린샷을 읽어 옮기면 반복이 안 되고 편차도 못 냅니다.
+측정값을 뽑는 경로는 플랫폼마다 다릅니다. 스크린샷을 읽어 옮기면 반복이 안 되고
+편차도 못 냅니다.
+
+| | 조건 전달 | 결과 수집 |
+|---|---|---|
+| Android | `am start --es auto webview --ez warm false` | `adb logcat -s BENCH` |
+| iOS | launch arguments (`-auto webview -warm 0`) | `simctl launch --console-pty` stdout |
+
+iOS 쪽이 이렇게 된 이유는 시뮬레이터 창을 GUI 로 자동화하려다 실패했기 때문입니다.
+02 번에서 `System Events` 로 창을 잡으려다 못 잡았습니다. launch arguments 는
+`UserDefaults` 가 `-key value` 형태를 그대로 읽어 주고, stdout 은 `--console-pty` 로
+받을 수 있어서 창을 건드리지 않고 끝납니다.
 
 프리워밍 조건에서는 고정 시간을 기다리지 않고 런타임이 실제로 준비됐는지 확인하고
 누릅니다. 처음에는 4초 고정으로 했는데 preload 가 덜 끝난 채로 눌러서 10회 중 3회가
@@ -332,14 +377,22 @@ cold 로 기록됐습니다.
 
 ## 확인한 것과 안 한 것
 
-에뮬레이터에서 debug 와 release 각각 4조건 10회씩, 총 80회 측정했습니다.
-화면 렌더, 네이티브 호출 왕복, 결과 반환은 양쪽 다 눈으로 확인했습니다.
+Android 에뮬레이터에서 debug 와 release 각각 4조건 10회씩 80회,
+iOS 시뮬레이터에서 release 4조건 10회씩 40회, 총 120회 측정했습니다.
+화면 렌더는 양쪽 다 눈으로 확인했습니다.
 
 안 한 것입니다.
 
-- 실기기. 에뮬레이터는 호스트 CPU 를 쓰기 때문에 절대값은 실기기와 다릅니다.
+- 실기기. 에뮬레이터와 시뮬레이터는 호스트 CPU 를 쓰기 때문에 절대값이 실기기와 다릅니다.
   순서는 뒤집히지 않을 것으로 보지만 확인은 안 했습니다
-- iOS. Android 만 쟀습니다
+- **iOS 숫자의 신뢰도가 특히 낮습니다.** 시뮬레이터는 아키텍처 변환 없이 호스트에서
+  네이티브로 도는데다, WebKit 이 macOS 쪽 구현을 일부 공유합니다.
+  Android 는 arm64 시스템 이미지라 그나마 실기기에 가깝습니다.
+  iOS 는 "RN 이 더 빨랐다"는 방향까지만 쓰고, 358ms 같은 숫자는 인용하지 마세요
+- iOS 의 debug 빌드. Android 에서 결론을 뒤집었던 변수인데 iOS 는 release 만 쟀습니다
+- iOS 앱 용량. 시뮬레이터 `.app` 이 28MB 인데 슬라이스가 여러 개 들어가 있어서
+  배포 크기와 비교가 안 됩니다. 실기기 아카이브로 다시 재야 합니다
+- iOS 웹뷰 프리워밍의 효과가 왜 작은지. 18% 라는 것만 확인했고 원인은 못 밝혔습니다
 - 캐시를 켠 웹뷰. 지금은 `LOAD_NO_CACHE` 로 조건을 통제했습니다.
   실무 웹뷰 최적화의 큰 축이라 따로 잴 값어치가 있습니다
 - 스크롤 성능과 메모리. 진입 시간만 쟀습니다. 화면별 판단 표의 근거인
