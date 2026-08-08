@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <!--
+      웹뷰도 RN 과 같은 문제를 겪습니다. 그대로 두면 상태바를 침범합니다.
+      여기서는 fitsSystemWindows 로 네이티브가 처리했습니다.
+      01 번에서 RCTRootView 를 safe area 에 제약으로 붙인 것과 같은 결정입니다.
+    -->
+    <WebView
+        android:id="@+id/web_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</FrameLayout>

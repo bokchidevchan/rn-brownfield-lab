@@ -1,0 +1,148 @@
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>웹뷰 상품 상세</title>
+<style>
+  :root { color-scheme: light; }
+  body {
+    margin: 0;
+    padding: 20px;
+    background: #f5f5f7;
+    color: #111114;
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .badge {
+    display: inline-block; background: #e8590c; color: #fff;
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 10px;
+  }
+  h1 { font-size: 24px; margin: 8px 0 16px; }
+  section { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  h2 { font-size: 13px; color: #6b6b74; letter-spacing: .4px; margin: 0 0 10px; }
+  .row { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0; }
+  .row span:first-child { color: #6b6b74; font-size: 14px; }
+  .row span:last-child { font-weight: 600; font-size: 14px; text-align: right; }
+  .note { font-size: 12px; line-height: 1.5; color: #6b6b74; }
+  button {
+    width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #d0d0d8;
+    background: #fff; font-size: 15px; font-weight: 600; color: #111114;
+  }
+  button.primary { background: #e8590c; border-color: #e8590c; color: #fff; }
+</style>
+
+<span class="badge">WEBVIEW</span>
+<h1>상품 상세</h1>
+
+<section>
+  <h2>네이티브가 넘긴 값</h2>
+  <div class="row"><span>productId</span><span id="pid">(없음)</span></div>
+  <div class="row"><span>entryPoint</span><span id="entry">(없음)</span></div>
+  <p class="note">
+    RN 의 initialProps 에 해당하는 자리입니다. 웹뷰는 그런 개념이 없어서
+    URL 쿼리스트링으로 받습니다. 그래서 값이 전부 문자열이고, 길이 제한도 있습니다.
+  </p>
+</section>
+
+<section>
+  <h2>런타임</h2>
+  <div class="row"><span>탭 → 첫 페인트</span><span id="ttfp">재는 중</span></div>
+  <div class="row"><span>이 웹뷰에서 로드된 횟수</span><span id="loads">1</span></div>
+  <p class="note">
+    RN 화면의 같은 항목과 비교하세요. 웹뷰는 화면을 닫으면 JS 컨텍스트도 같이 사라져서,
+    프리워밍한 웹뷰를 재사용하지 않는 한 이 값이 항상 1 입니다.
+  </p>
+</section>
+
+<section>
+  <h2>네이티브 호출</h2>
+  <div class="row"><span>appVersion</span><span id="ver">-</span></div>
+  <div class="row"><span>왕복 시간</span><span id="rtt">-</span></div>
+  <button onclick="callNative()">호스트 정보 가져오기</button>
+  <p class="note">
+    RN 은 <code>await HostBridge.getHostInfo()</code> 한 줄입니다.
+    여기서는 요청 ID 를 만들고, 콜백 표를 관리하고, 응답을 기다려야 합니다.
+    아래 스크립트가 그 코드입니다.
+  </p>
+</section>
+
+<section>
+  <h2>닫기</h2>
+  <button class="primary" onclick="finish()">장바구니에 담고 닫기</button>
+</section>
+
+<script>
+  // ── 네이티브 통신 계층 ────────────────────────────────────────────────
+  // RN 이 프레임워크로 제공하는 것을 웹뷰에서는 직접 만들어야 합니다.
+  // 요청 ID 발급, 콜백 테이블, 타임아웃, 플랫폼별 전송 경로가 전부 앱 코드입니다.
+  const pending = new Map();
+  let seq = 0;
+
+  function send(type, payload) {
+    const message = JSON.stringify({type, ...payload});
+    if (window.AndroidBridge) {
+      // Android: addJavascriptInterface 로 붙인 객체
+      window.AndroidBridge.postMessage(message);
+    } else if (window.webkit && window.webkit.messageHandlers.iosBridge) {
+      // iOS: WKScriptMessageHandler
+      window.webkit.messageHandlers.iosBridge.postMessage(message);
+    }
+  }
+
+  function request(type, payload = {}) {
+    const id = String(++seq);
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        pending.delete(id);
+        reject(new Error('네이티브 응답 없음'));
+      }, 3000);
+      pending.set(id, {resolve, timer});
+      send(type, {...payload, id});
+    });
+  }
+
+  // 네이티브가 응답을 이 함수로 주입합니다.
+  window.__resolve = function (id, json) {
+    const entry = pending.get(id);
+    if (!entry) return;
+    clearTimeout(entry.timer);
+    pending.delete(id);
+    entry.resolve(JSON.parse(json));
+  };
+
+  // ── 화면 ──────────────────────────────────────────────────────────────
+  const params = new URLSearchParams(location.search);
+  document.getElementById('pid').textContent = params.get('productId') || '(없음)';
+  document.getElementById('entry').textContent = params.get('entryPoint') || '(없음)';
+
+  // 같은 웹뷰 인스턴스를 재사용하는지 보기 위한 카운터.
+  // sessionStorage 는 웹뷰 인스턴스 단위로 유지됩니다.
+  const loads = Number(sessionStorage.getItem('loads') || 0) + 1;
+  sessionStorage.setItem('loads', String(loads));
+  document.getElementById('loads').textContent = String(loads);
+
+  async function callNative() {
+    const t0 = performance.now();
+    try {
+      const info = await request('HOST_INFO');
+      document.getElementById('ver').textContent = info.appVersion;
+      document.getElementById('rtt').textContent =
+        Math.round(performance.now() - t0) + 'ms';
+    } catch (e) {
+      document.getElementById('ver').textContent = e.message;
+    }
+  }
+
+  function finish() {
+    send('FINISH', {productId: params.get('productId') || '', action: 'ADD_TO_CART'});
+  }
+
+  // ── 첫 페인트 신호 ────────────────────────────────────────────────────
+  // RN 쪽과 같은 정의로 재기 위해, 브라우저가 프레임을 실제로 그린 뒤에 알립니다.
+  // rAF 를 두 번 겹치면 "다음 프레임이 화면에 나간 직후"가 됩니다.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      send('FIRST_PAINT', {});
+      // 화면에도 표시합니다. 네이티브가 계산한 값을 다시 받아 넣습니다.
+      window.__showTtfp = function (ms) {
+        document.getElementById('ttfp').textContent = ms + 'ms';
+      };
+    });
+  });
+</script>

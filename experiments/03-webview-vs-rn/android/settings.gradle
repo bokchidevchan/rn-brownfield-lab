@@ -1,0 +1,27 @@
+pluginManagement {
+    // 01 번은 android/ 의 부모에 node_modules 가 있어서 ../node_modules 였습니다.
+    // 여기는 JS 가 rn/ 아래에 따로 있어서 ../rn/node_modules 입니다.
+    //
+    // 01 번 README 에서 "기본값과 같은 값이라도 전부 명시해 두면 옮겨 붙일 때
+    // 체크리스트가 된다"고 적었던 게 바로 이 경우입니다. 실제로 이 경로 하나 때문에
+    // 첫 빌드가 실패했습니다.
+    includeBuild("../rn/node_modules/@react-native/gradle-plugin")
+}
+
+plugins {
+    id("com.facebook.react.settings")
+}
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+    // autolinking 이 CLI 를 돌리는 작업 디렉토리를 JS 루트로 지정합니다.
+    // 지정하지 않으면 android/ 의 부모에서 package.json 을 찾다 실패합니다.
+    ex.autolinkLibrariesFromCommand(
+        ["node", "../rn/node_modules/react-native/cli.js", "config"],
+        file("../rn"),
+    )
+}
+
+includeBuild("../rn/node_modules/@react-native/gradle-plugin")
+
+rootProject.name = "WebViewVsRn"
+include ":app"

@@ -1,0 +1,35 @@
+# JS
+node_modules/
+.metro-health-check*
+*.log
+
+# 산출물
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/index.android.bundle
+android/app/src/main/res/drawable-*/
+android/app/src/main/res/raw/
+
+ios/build/
+ios/Pods/
+ios/main.jsbundle
+ios/.xcode.env.local
+ios/*.xcworkspace/xcuserdata/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+ios/PrivacyInfo.xcprivacy
+
+# 측정 결과는 README 에 정리해서 남깁니다. 원본 로그는 올리지 않습니다.
+bench-*.txt
+
+# 서명 관련은 저장소에 넣지 않습니다.
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+*.cer
+keystore.properties
+.env
+.env.*

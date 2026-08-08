@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">웹뷰 vs RN</string>
+    <string name="status">웹뷰 런타임: %1$s / RN 인스턴스: %2$s</string>
+    <string name="warm_web">웹뷰 프리워밍</string>
+    <string name="warm_rn">RN 인스턴스 미리 생성</string>
+    <string name="open_web">웹뷰로 상품 상세 열기</string>
+    <string name="open_rn">RN 으로 상품 상세 열기</string>
+    <string name="result_placeholder">화면에서 돌아온 결과가 여기 표시됩니다.</string>
+</resources>
