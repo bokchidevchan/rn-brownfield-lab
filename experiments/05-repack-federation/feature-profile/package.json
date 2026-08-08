@@ -4,7 +4,8 @@
   "private": true,
   "description": "두 번째 원격 피처. 한 호스트가 여러 원격을 로드하는 것을 검증합니다",
   "scripts": {
-    "bundle:android": "react-native webpack-bundle --platform android --dev false --entry-file src/empty.js --bundle-output build/entry.bundle --assets-dest build"
+    "bundle:android": "react-native webpack-bundle --platform android --dev false --entry-file src/empty.js --bundle-output build/entry.bundle --assets-dest build",
+    "bundle:ios": "react-native webpack-bundle --platform ios --dev false --entry-file src/empty.js --bundle-output build/entry.ios.bundle --assets-dest build"
   },
   "dependencies": {
     "react": "18.3.1",

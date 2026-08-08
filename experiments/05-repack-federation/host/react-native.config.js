@@ -13,4 +13,5 @@ module.exports = {
 // 03 번, 04 번과 같은 이유입니다.
 module.exports.project = {
   android: { sourceDir: '../android' },
+  ios: { sourceDir: '../ios' },
 };

@@ -5,7 +5,8 @@
   "description": "Module Federation 호스트. RN 런타임과 공유 의존성을 소유합니다",
   "scripts": {
     "start": "react-native webpack-start",
-    "bundle:android": "react-native webpack-bundle --platform android --dev false --entry-file index.js --bundle-output build/index.android.bundle --assets-dest build"
+    "bundle:android": "react-native webpack-bundle --platform android --dev false --entry-file index.js --bundle-output build/index.android.bundle --assets-dest build",
+    "bundle:ios": "react-native webpack-bundle --platform ios --dev false --entry-file index.js --bundle-output build/main.jsbundle --assets-dest build"
   },
   "dependencies": {
     "react": "18.3.1",

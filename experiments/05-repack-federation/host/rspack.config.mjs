@@ -5,6 +5,21 @@ import * as Repack from '@callstack/repack';
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
+ * 원격 주소는 빌드 타임에 번들로 박히므로 플랫폼별로 만듭니다.
+ * Android 에뮬레이터는 호스트 머신이 10.0.2.2, iOS 시뮬레이터는 localhost.
+ * 산출물도 플랫폼별로 따로 빌드하므로 경로 세그먼트도 나눕니다.
+ */
+function remotesFor(platform) {
+  const hostMachine = platform === 'ios' ? 'localhost' : '10.0.2.2';
+  const base = `http://${hostMachine}:4100/${platform}`;
+  const entry = name => `${name}@${base}/${name}/${name}.container.js.bundle`;
+  return {
+    featureCart: entry('featureCart'),
+    featureProfile: entry('featureProfile'),
+  };
+}
+
+/**
  * 호스트 번들 설정.
  *
  * 03 번에서 이런 문제를 적었습니다.
@@ -57,12 +72,7 @@ export default (env) => {
          * 체인 밖에서 터져서 errorLoadRemote 훅 없이는 앱 크래시가 됩니다.
          * 컨테이너 직접 지정이면 실패 지점이 스크립트 로드 하나로 모입니다.
          */
-        remotes: {
-          featureCart:
-            'featureCart@http://10.0.2.2:4100/android/featureCart/featureCart.container.js.bundle',
-          featureProfile:
-            'featureProfile@http://10.0.2.2:4100/android/featureProfile/featureProfile.container.js.bundle',
-        },
+        remotes: remotesFor(platform),
 
         /**
          * 원격 로드 실패를 크래시 대신 폴백으로 바꾸는 런타임 플러그인.

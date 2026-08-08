@@ -75,7 +75,12 @@ async function loadBypassingCache(name, expose) {
   return factory();
 }
 
-export default function HostScreen() {
+/**
+ * autoOpen 은 iOS 검증용입니다. 시뮬레이터는 좌표 탭 자동화가 번거로워서,
+ * 네이티브가 initialProps 로 { autoOpen: true } 를 넘기면 피처를 시차를 두고
+ * 자동으로 엽니다. Android 는 이 prop 없이 손으로 탭합니다.
+ */
+export default function HostScreen({ autoOpen }) {
   return (
     <ScrollView style={s.screen} contentContainerStyle={s.content}>
       <Text style={s.badge}>HOST</Text>
@@ -89,8 +94,13 @@ export default function HostScreen() {
         </Text>
       </View>
 
-      {Object.entries(FEATURES).map(([name, meta]) => (
-        <RemoteFeature key={name} name={name} meta={meta} />
+      {Object.entries(FEATURES).map(([name, meta], i) => (
+        <RemoteFeature
+          key={name}
+          name={name}
+          meta={meta}
+          autoDelay={autoOpen ? 1000 + i * 2000 : null}
+        />
       ))}
     </ScrollView>
   );
@@ -100,9 +110,18 @@ export default function HostScreen() {
  * 원격 피처 하나의 로드 상태를 관리하는 단위입니다.
  * 피처끼리 상태가 독립이라, 하나가 실패해도 다른 하나는 정상 동작합니다.
  */
-function RemoteFeature({ name, meta }) {
+function RemoteFeature({ name, meta, autoDelay }) {
   const [state, setState] = useState({ status: 'idle' });
   const [mountedAt, setMountedAt] = useState(null);
+
+  React.useEffect(() => {
+    if (autoDelay == null) {
+      return undefined;
+    }
+    const t = setTimeout(open, autoDelay);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const open = () => {
     if (state.status === 'loading') {

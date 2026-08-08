@@ -4,7 +4,8 @@
   "private": true,
   "description": "원격으로 배포되는 피처 번들. 호스트의 react/react-native 를 빌려 씁니다",
   "scripts": {
-    "bundle:android": "react-native webpack-bundle --platform android --dev false --entry-file src/empty.js --bundle-output build/entry.bundle --assets-dest build"
+    "bundle:android": "react-native webpack-bundle --platform android --dev false --entry-file src/empty.js --bundle-output build/entry.bundle --assets-dest build",
+    "bundle:ios": "react-native webpack-bundle --platform ios --dev false --entry-file src/empty.js --bundle-output build/entry.ios.bundle --assets-dest build"
   },
   "dependencies": {
     "react": "18.3.1",

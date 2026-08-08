@@ -30,10 +30,11 @@ const FEATURE_DIRS = {
   featureProfile: 'feature-profile',
 };
 
-function rootFor(featureName) {
+function rootFor(platform, featureName) {
+  if (platform !== 'android' && platform !== 'ios') return null;
   const dir = FEATURE_DIRS[featureName];
   if (!dir) return null;
-  return path.join(__dirname, '..', dir, 'build', 'generated', 'android');
+  return path.join(__dirname, '..', dir, 'build', 'generated', platform);
 }
 
 let served = [];
@@ -52,15 +53,15 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // /android/<원격이름>/<파일>  ->  <피처 디렉토리>/build/generated/android/<파일>
-  const m = urlPath.match(/^\/android\/([^/]+)\/(.+)$/);
-  const root = m && rootFor(m[1]);
+  // /<플랫폼>/<원격이름>/<파일>  ->  <피처 디렉토리>/build/generated/<플랫폼>/<파일>
+  const m = urlPath.match(/^\/([^/]+)\/([^/]+)\/(.+)$/);
+  const root = m && rootFor(m[1], m[2]);
   if (!root) {
     console.log(`404  ${urlPath} (매핑 없음)`);
     res.writeHead(404).end('not found');
     return;
   }
-  const full = path.join(root, path.basename(m[2]));
+  const full = path.join(root, path.basename(m[3]));
 
   fs.readFile(full, (err, data) => {
     if (err) {

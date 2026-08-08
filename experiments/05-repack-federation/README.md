@@ -25,6 +25,8 @@ Pixel 9 에뮬레이터(arm64), dev=false 번들 기준입니다. 서버가 로�
 
 두 번째 피처(71ms)가 첫 피처(192ms)보다 빨리 뜨는 이유는 공유 스코프 협상이 첫 로드에서 이미 끝나 있기 때문입니다. 원격 코드 안의 useState 가 정상 동작한다는 것은 React 인스턴스가 하나뿐이라는 증거입니다. 두 벌이면 "Invalid hook call" 로 깨집니다.
 
+iOS 도 같은 구조로 검증했습니다. iPhone 15 시뮬레이터에서 두 피처가 `/ios/` 경로의 산출물 4건(장바구니 152,311 + 3,166, 프로필 152,890 + 3,455 bytes)만 받아 렌더됐고, 탭 대신 initialProps 의 autoOpen 으로 구동해 장바구니 67ms, 프로필 48ms 에 마운트됐습니다. 시뮬레이터는 실기기와 하드웨어가 달라 이 수치는 부정확하며 경향만 봐야 합니다. JS 쪽 차이는 주소 하나(Android 에뮬레이터 10.0.2.2, iOS 시뮬레이터 localhost)와 산출물 경로 세그먼트뿐이고, 네이티브 쪽은 01 번과 같은 RCTRootView 통합에 ATS 로컬 네트워크 예외(NSAllowsLocalNetworking)만 추가됩니다. Re.Pack 의 ScriptManager 가 네이티브 모듈(callstack-repack pod)이라 iOS 에서도 autolinking 이 필요하다는 점은 같습니다.
+
 "react-native 를 안 받는다"는 주장은 번들 크기만 봐서는 증명이 안 됩니다. 빌드하면 폴백용 vendors 청크(react-native 조각들)가 같이 생기기 때문입니다. 그래서 서버(`server/server.js`)가 요청을 전부 기록하게 만들고, 런타임에 실제로 내려간 목록으로 확인했습니다. 폴백 청크는 한 번도 요청되지 않았습니다.
 
 공유가 깨진 상태와의 대비도 숫자로 남깁니다. Re.Pack 의 MF2 플러그인 기본값(`eager: true`)으로 피처를 빌드하면 컨테이너가 842,774 bytes 가 되고 그 안에 AppRegistry 와 StyleSheet 까지 들어갑니다. `eager: false` 로 바꾸면 152,315 bytes 로 줄고 react-native 심볼이 사라집니다. 피처 화면 코드 자체는 3KB 라는 것까지 보면, 나머지 149KB 는 federation 런타임과 공유 협상 코드의 몫입니다.
@@ -41,8 +43,9 @@ Pixel 9 에뮬레이터(arm64), dev=false 번들 기준입니다. 서버가 로�
 │     └─ mfFallbackPlugin.js # 원격 로드 실패를 크래시 대신 값으로
 ├─ feature-cart/    # 원격 피처 1. exposes 로 화면을 내놓음
 ├─ feature-profile/ # 원격 피처 2. 다른 팀이 만든다고 가정한 화면
-├─ server/          # 정적 서버 + 요청 로그(측정 도구)
-└─ android/         # 소비 앱. 번들 생성은 Gradle 에 안 맡김
+├─ server/          # 정적 서버 + 요청 로그(측정 도구). 플랫폼별 산출물 서빙
+├─ android/         # 소비 앱. 번들 생성은 Gradle 에 안 맡김
+└─ ios/             # 소비 앱. RCTRootView + autoOpen initialProps
 ```
 
 피처를 하나 추가하는 비용은 이렇습니다. 피처 쪽은 feature-cart 를 복사해 rspack 설정의 name, filename, exposes 세 값을 바꾸는 게 전부입니다. 호스트 쪽은 remotes 에 주소 한 줄, HostScreen 의 FEATURES 목록에 항목 하나, scriptManager 의 컨테이너 목록에 이름 하나. 서버(CDN 역할)는 이름 → 디렉토리 매핑 한 줄입니다. 호스트를 재배포해야 하는 변경은 remotes 와 FEATURES 뿐이고, 피처 내용의 변경은 피처 재빌드로 끝납니다.
@@ -124,11 +127,19 @@ cd ../android && ./gradlew installDebug -PabiFilters=arm64-v8a
 
 # 6. 실제로 뭘 받아갔는지
 curl localhost:4100/__log
+
+# iOS: 피처와 호스트를 ios 로도 번들 → 앱 리소스로 복사 → 빌드
+#   (앱이 autoOpen 으로 알아서 두 피처를 엽니다)
+cd feature-cart && npm run bundle:ios
+cd ../feature-profile && npm run bundle:ios
+cd ../host && npm run bundle:ios && cp build/main.jsbundle ../ios/main.jsbundle
+cd ../ios && ruby scripts/generate_xcodeproj.rb && pod install
+xcodebuild -workspace MfHost.xcworkspace -scheme MfHost -sdk iphonesimulator build
 ```
 
 ## 한계
 
-- iOS 판은 만들지 않았습니다. Re.Pack 설정은 플랫폼 공통이고 ScriptManager 도 iOS 를 지원하므로 구조는 같지만, 이 실험의 수치는 Android 에뮬레이터 것입니다.
+- 수치는 전부 에뮬레이터와 시뮬레이터 것입니다. 특히 iOS 시뮬레이터는 실기기와 하드웨어가 달라 절대값이 부정확합니다.
 - 서버가 로컬이라 다운로드 시간이 실서비스보다 낙관적입니다. 87~136ms 라는 숫자는 "파싱과 초기화 비용"에 가깝고, 실제로는 CDN 왕복이 더해집니다.
 - 캐시를 끄고 측정했습니다(`cache: false`). 실제 앱에서는 켜야 하고, 켜면 두 번째 실행부터는 첫 탭도 네트워크를 안 탑니다.
 - 두 피처가 공유 의존성을 같은 버전으로 씁니다. 버전이 어긋날 때(피처 A 는 lib@1, B 는 lib@2)의 공유 스코프 충돌은 다루지 않았습니다.

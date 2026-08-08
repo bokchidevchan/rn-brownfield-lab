@@ -2,3 +2,20 @@
 # 재현: host 에서 npm run bundle:android 후 build/index.android.bundle 을 여기로 복사.
 android/app/src/main/assets/*.bundle
 android/.gradle/
+
+# iOS 생성물. 03 번과 같은 규칙입니다.
+ios/Pods/
+ios/main.jsbundle
+ios/.xcbuild*/
+ios/.xcode.env.local
+ios/*.xcworkspace/xcuserdata/
+ios/*.xcodeproj/xcuserdata/
+ios/*.xcodeproj/project.xcworkspace/
+
+# 서명 관련은 저장소에 넣지 않습니다.
+*.keystore
+*.p12
+*.mobileprovision
+.env
+.env.*
+ios/PrivacyInfo.xcprivacy

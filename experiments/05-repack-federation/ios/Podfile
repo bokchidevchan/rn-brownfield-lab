@@ -1,0 +1,39 @@
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', File.join(__dir__, '..', 'host')]).strip
+
+platform :ios, min_ios_version_supported
+prepare_react_native_project!
+
+RN_ROOT = File.expand_path(File.join(__dir__, '..', 'host'))
+
+# use_native_modules! 는 경로가 아니라 "실행할 명령"을 받습니다.
+# JS 루트가 ../host 라 거기서 CLI 를 돌리게 명령을 직접 만들어 넘깁니다.
+# 03 번과 같은 방식입니다. 여기서 autolinking 이 중요해지는 이유는
+# Re.Pack 의 ScriptManager 가 네이티브 모듈(callstack-repack pod)이라서입니다.
+RN_CONFIG_COMMAND = [
+  'node',
+  '-e',
+  "process.chdir('#{RN_ROOT}');" \
+  "process.argv=['', '', 'config'];" \
+  "require('#{RN_ROOT}/node_modules/@react-native-community/cli').run()",
+].freeze
+
+target 'MfHost' do
+  config = use_native_modules!(RN_CONFIG_COMMAND)
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :app_path => "#{__dir__}/../host"
+  )
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false
+    )
+  end
+end

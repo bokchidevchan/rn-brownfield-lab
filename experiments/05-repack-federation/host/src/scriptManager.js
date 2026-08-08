@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { ScriptManager, Script } from '@callstack/repack/client';
 
 /**
@@ -12,7 +13,11 @@ import { ScriptManager, Script } from '@callstack/repack/client';
  * 주소 하나를 통째로 바꾸면 그게 블루그린입니다.
  * 배포 전략이 인프라가 아니라 이 함수 안에 들어온다는 게 이 방식의 특징입니다.
  */
-const REMOTE_BASE = 'http://10.0.2.2:4100';
+// Android 에뮬레이터는 호스트 머신이 10.0.2.2, iOS 시뮬레이터는 localhost 입니다.
+// 경로의 플랫폼 세그먼트도 각자 자기 것(android, ios 산출물)을 봅니다.
+const HOST_MACHINE = Platform.OS === 'ios' ? 'localhost' : '10.0.2.2';
+const REMOTE_BASE = `http://${HOST_MACHINE}:4100`;
+const PLATFORM_SEGMENT = Platform.OS;
 
 // 무엇이 언제 요청되는지 보려고 이벤트를 전부 로그로 남깁니다.
 // 원격 로딩은 실패해도 조용한 경우가 있어서, 이 로그가 사실상 유일한 단서입니다.
@@ -35,8 +40,8 @@ ScriptManager.shared.addResolver(async (scriptId, caller) => {
   // 그 문맥이 없어서 이 매핑이 없으면 "Reference URL is missing" 이 납니다.
   const CONTAINERS = ['featureCart', 'featureProfile'];
   const url = CONTAINERS.includes(scriptId)
-    ? `${REMOTE_BASE}/android/${scriptId}/${scriptId}.container.js.bundle`
-    : `${REMOTE_BASE}/android/${caller ?? 'featureCart'}/${scriptId}.chunk.bundle`;
+    ? `${REMOTE_BASE}/${PLATFORM_SEGMENT}/${scriptId}/${scriptId}.container.js.bundle`
+    : `${REMOTE_BASE}/${PLATFORM_SEGMENT}/${caller ?? 'featureCart'}/${scriptId}.chunk.bundle`;
 
   return {
     // 두 번째 인자가 없으면 getRemoteURL 이 webpack 컨텍스트의 확장자 규칙을
