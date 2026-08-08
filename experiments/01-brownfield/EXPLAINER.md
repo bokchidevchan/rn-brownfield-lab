@@ -160,6 +160,102 @@ JS 는 UI 스레드에서 돌지 않습니다. JS 무한루프가 네이티브 �
 반대로 JS 가 뷰를 동기로 읽을 방법도 없습니다.
 Old Architecture 에서 `measure()` 가 콜백인 이유입니다.
 
+### 1-6. 번들과 네이티브는 무엇을 나눠 갖는가
+
+APK 를 열어 보면 `libreactnative.so` 도 있고 JS 번들도 있습니다. 같은 프레임워크가
+두 번 들어간 것처럼 보이는데, 중복이 아니라 **같은 기능의 서로 다른 절반**입니다.
+
+`<Text>` 하나를 끝까지 따라가면 명확합니다.
+
+```
+[번들 안 JS]                          [네이티브 dex/so]
+Libraries/Text/Text.js                ReactTextViewManager.java
+  props API, 기본값, React 컴포넌트       실제 뷰 생성과 속성 적용
+  uiViewClassName: 'RCTText' ──────→  REACT_CLASS = "RCTText"
+                     ↑                          │
+              이 문자열이 계약                    ▼
+                                      ReactTextView extends AppCompatTextView
+```
+
+JS 쪽에는 `TextView` 를 만드는 코드가 한 줄도 없습니다. `"RCTText"` 라는 이름과
+넘길 props 만 있습니다. 네이티브 쪽에는 React 컴포넌트도 props 기본값도 없습니다.
+이름을 받아 위젯을 만드는 코드만 있습니다.
+
+정리하면 네이티브는 **어떻게 그리는가**를 갖고, JS 는 **무엇을 그릴지와 언제 바꿀지**를
+갖습니다. 둘은 문자열 계약에서 만납니다.
+
+번들 안을 실제로 세어 보면 이렇습니다. 릴리스 소스맵 기준 489개 모듈입니다.
+
+| 구분 | 모듈 | 소스 바이트 | 비중 |
+|---|---|---|---|
+| react-native JS | 408 | 2,133,850 | 86.2% |
+| @react-native/* | 21 | 190,595 | 7.7% |
+| 기타 npm | 49 | 132,872 | 5.4% |
+| 우리 앱 코드 | 6 | 10,648 | 0.4% |
+| react | 4 | 8,193 | 0.3% |
+
+813KB 번들의 대부분이 프레임워크 JS 입니다. 우리가 쓴 코드는 10KB 입니다.
+RN 을 붙이면 앱 코드가 한 줄이어도 이 몫은 고정으로 들어갑니다.
+
+직접 재는 방법입니다.
+
+```bash
+./gradlew assembleRelease -PabiFilters=arm64-v8a
+# app/build/generated/sourcemaps/react/release/index.android.bundle.map
+# 의 sources 배열을 경로 prefix 로 묶으면 위 표가 나옵니다
+```
+
+### 1-7. 서드파티 라이브러리도 같은 구조입니다
+
+`react-native-reanimated` 를 예로 들면, 설치는 npm 한 번입니다.
+패키지 하나에 모든 절반이 들어 있습니다. 3.19.5 기준입니다.
+
+```
+lib/          844개  컴파일된 JS       → Metro 가 번들에 넣음
+src/          212개  JS 소스
+Common/        73개  C++ (양 플랫폼 공용) ┐
+android/       84개  Java/Kotlin/JNI    ├→ autolinking 이 네이티브 빌드에 넣음
+apple/         52개  ObjC++/Swift      ┘
+plugin/         1개  Babel 플러그인     → 빌드 타임에만 사용
+```
+
+Android 와 iOS 사이에도 중복이 없습니다. 핵심 로직을 C++ 로 한 번 쓰고 양쪽이 공유합니다.
+빌드 설정에 그대로 나옵니다.
+
+```ruby
+# RNReanimated.podspec (iOS)
+ss.source_files = "Common/cpp/reanimated/**/*.{cpp,h}"
+```
+```groovy
+// android/build.gradle (Android)
+from("$projectDir/../Common/cpp")
+```
+
+플랫폼별 코드는 그 C++ 를 각 OS 에 붙이는 얇은 층입니다. RN 코어도 같은 구조라
+`libreactnative.so` 안의 C++ 와 iOS 정적 라이브러리 안의 C++ 가 같은 소스에서 나옵니다.
+
+**다만 reanimated 는 이 모델의 예외입니다.** 하필 이 라이브러리가
+"JS 가 요청하고 네이티브가 그린다"를 안 하려고 만들어진 것이기 때문입니다.
+
+애니메이션은 프레임마다 값이 바뀝니다. 60fps 면 초당 60번 브리지를 왕복해야 하는데
+그게 안 됩니다. 그래서 reanimated 는 UI 스레드에 **두 번째 JS 런타임**을 띄웁니다.
+
+```
+Common/cpp/worklets/WorkletRuntime/ReanimatedHermesRuntime.cpp
+```
+
+`useAnimatedStyle` 안에 쓴 함수(worklet)는 Babel 플러그인이 따로 뽑아내서
+메인 런타임이 아니라 이 UI 런타임에서 실행되게 만듭니다. 애니메이션이 도는 동안
+브리지를 건드리지 않습니다.
+
+여기서는 복사본이 하나 더 생기는 게 맞습니다. Hermes 런타임 인스턴스가 두 개 돌고
+worklet 코드가 양쪽 런타임에 존재합니다. 디스크가 아니라 런타임 메모리 쪽입니다.
+
+라이브러리를 하나 넣을 때 늘어나는 몫이 번들(JS)과 네이티브 바이너리(`.so`) 두 군데로
+갈립니다. reanimated 처럼 C++ 비중이 큰 라이브러리는 번들보다 `.so` 쪽이 훨씬 많이
+늘어납니다. 넣기 전후로 릴리스 APK 를 빌드해서 `assets/index.android.bundle` 과
+`lib/arm64-v8a/*.so` 를 각각 비교하면 실측됩니다.
+
 ---
 
 ## 2. 브리지
@@ -343,7 +439,28 @@ JS 만 앞서 나가고 네이티브가 옛 버전인 조합이 실제 사용자
 반대로 JS 가 새 메서드를 부르면 옛 네이티브에서는 `undefined is not a function` 이 됩니다.
 그린필드에는 없는 문제입니다. 거기서는 JS 와 네이티브가 항상 같이 배포되니까요.
 
-### 4-4. 도구 현황 (2026-08 기준)
+### 4-4. 번들을 쪼갤 때 진짜 중복이 생깁니다
+
+1-6 에서 번들의 86% 가 프레임워크 JS 라고 했습니다. 화면 하나짜리 앱에서는 그냥 고정비인데,
+OTA 를 하려고 기능별로 번들을 나누는 순간 문제가 됩니다.
+
+화면 A 와 화면 B 를 별도 번들로 만들면 두 번들 각각에 그 700KB 가 통째로 들어갑니다.
+같은 프레임워크 JS 를 두 번 내려받고 두 번 파싱합니다. 화면이 늘어날수록 배수로 늘어납니다.
+
+해법은 base 번들과 feature 번들을 나누는 것입니다. RN 런타임이 든 base 를 앱에 내장해
+먼저 올리고, feature 번들은 그걸 참조만 하게 만듭니다. Metro 에 필요한 설정이 있습니다.
+
+- `serializer.createModuleIdFactory` 로 모듈 ID 를 번들 간에 안정적으로 고정
+- `serializer.processModuleFilter` 로 base 에 이미 있는 모듈을 feature 번들에서 제외
+
+granite 나 Re.Pack 같은 도구가 이 구성을 대신해 줍니다.
+OTA 설계에서 "번들을 어떻게 쪼개고 무엇을 앱에 남길 것인가"가 사실상 전부입니다.
+
+브라운필드에서는 하나 더 걸립니다. base 번들은 앱에 내장돼 있어서 OTA 로 못 바꿉니다.
+즉 base 를 바꾸려면 스토어 업데이트고, 그 순간 4-3 의 버전 스큐가 base 와 feature 사이에도
+생깁니다.
+
+### 4-5. 도구 현황 (2026-08 기준)
 
 Visual Studio App Center 가 2025-03-31 에 종료되면서 CodePush 호스팅도 같이 끝났습니다.
 Microsoft 가 CodePush Server 소스를 공개했지만 이후 저장소를 아카이브해서, 지금은
