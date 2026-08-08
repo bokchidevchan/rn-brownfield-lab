@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">소비 앱 (쇼핑)</string>
+    <string name="native_badge">NATIVE ONLY (RN 을 모르는 앱)</string>
+
+    <string name="open_detail">RN SDK 상품 상세 열기</string>
+    <string name="open_embedded">네이티브 화면 안에 SDK 뷰 삽입</string>
+    <string name="change_theme">테마 바꾸기 (SDK 로 알림)</string>
+    <string name="release_memory">RN 인스턴스 해제 (releaseMemory)</string>
+
+    <string name="sdk_status">RN 인스턴스: %1$s</string>
+    <string name="result_placeholder">SDK 에서 돌아온 결과가 여기 표시됩니다.</string>
+    <string name="result_received">SDK 결과: %1$s (%2$s)</string>
+    <string name="released">RN 인스턴스를 해제했습니다. 다음 진입에서 다시 만들어집니다.</string>
+    <string name="theme_sent">테마 전달: %1$s — 받을 SDK 화면이 떠 있어야 반영됩니다.</string>
+
+    <string name="embedded_toolbar">네이티브 툴바 (소비 앱 코드)</string>
+    <string name="embedded_footer">가운데는 SDK 가 돌려준 View 입니다. 소비 앱은 addView 만 했습니다.</string>
+</resources>

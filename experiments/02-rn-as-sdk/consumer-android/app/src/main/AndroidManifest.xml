@@ -1,0 +1,33 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      INTERNET 권한도, RnSdkActivity 등록도 여기 없습니다.
+      SDK 의 AAR 매니페스트가 병합되면서 자동으로 들어옵니다.
+
+      병합 결과를 확인하려면:
+        app/build/outputs/logs/manifest-merger-debug-report.txt
+    -->
+
+    <application
+        android:name=".ShopApplication"
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ConsumerShop">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".EmbeddedActivity"
+            android:exported="false" />
+
+    </application>
+</manifest>

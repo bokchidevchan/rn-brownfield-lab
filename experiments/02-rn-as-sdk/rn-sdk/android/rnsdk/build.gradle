@@ -1,0 +1,88 @@
+plugins {
+    id "com.android.library"
+    id "org.jetbrains.kotlin.android"
+    id "maven-publish"
+}
+
+android {
+    namespace "com.example.rnsdk"
+    compileSdk rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        minSdk rootProject.ext.minSdkVersion
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
+    }
+}
+
+dependencies {
+    // api 로 노출합니다. implementation 으로 두면 소비 앱의 컴파일 클래스패스에
+    // RN 이 안 올라와서, 소비 앱이 RN 타입을 직접 쓰지는 않더라도
+    // AAR 안의 리소스와 네이티브 라이브러리 병합에서 문제가 생길 수 있습니다.
+    //
+    // 이 좌표가 Maven Central 에 있다는 게 이 실험의 전제입니다.
+    // node_modules 없이 RN 을 받을 수 있어야 소비 앱이 Node 에서 자유로워집니다.
+    api("com.facebook.react:react-android:${rootProject.ext.reactNativeVersion}")
+    api("com.facebook.react:hermes-android:${rootProject.ext.reactNativeVersion}")
+
+    implementation("androidx.appcompat:appcompat:1.7.0")
+
+    // RnSdkView 가 부모의 LifecycleOwner 를 찾을 때 씁니다.
+    // 이게 있어야 소비 앱이 생명주기를 손으로 연결하지 않아도 됩니다.
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+}
+
+/**
+ * JS 번들이 없으면 빌드를 세웁니다.
+ *
+ * 01 번에서는 RN Gradle 플러그인이 릴리스 빌드마다 번들을 알아서 뽑았습니다.
+ * 여기서는 그 자동화가 없으므로, 빼먹으면 런타임에 흰 화면으로 나타납니다.
+ * 빌드 시점에 잡는 편이 낫습니다.
+ */
+def jsBundle = file("src/main/assets/index.android.bundle")
+
+tasks.register("checkJsBundle") {
+    doFirst {
+        if (!jsBundle.exists()) {
+            throw new GradleException(
+                "JS 번들이 없습니다: ${jsBundle}\n" +
+                "SDK 를 빌드하기 전에 rn-sdk 디렉토리에서 다음을 실행하세요.\n" +
+                "  npm install\n" +
+                "  npm run bundle:android"
+            )
+        }
+    }
+}
+
+tasks.named("preBuild") { dependsOn("checkJsBundle") }
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                groupId = "com.example.rnsdk"
+                artifactId = "rn-sdk"
+                version = rootProject.ext.sdkVersion
+            }
+        }
+    }
+}

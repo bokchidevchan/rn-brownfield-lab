@@ -1,0 +1,30 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+/**
+ * 01 번과 비교해서 사라진 것이 있습니다.
+ *
+ *   includeBuild("../node_modules/@react-native/gradle-plugin")
+ *   plugins { id("com.facebook.react.settings") }
+ *   ex.autolinkLibrariesFromCommand()
+ *
+ * RN Gradle 플러그인을 아예 안 씁니다. 이 모듈은 그냥 평범한 Android 라이브러리이고,
+ * RN 은 Maven Central 의 com.facebook.react:react-android 의존성으로만 들어옵니다.
+ * 그래서 이 프로젝트를 빌드하는 데 node_modules 가 필요 없습니다.
+ * 필요한 건 JS 번들 파일 하나뿐이고, 그건 배포 전에 미리 만들어 둡니다.
+ */
+rootProject.name = "rn-sdk-android"
+include ":rnsdk"

@@ -1,0 +1,43 @@
+# JS
+node_modules/
+.metro-health-check*
+*.log
+
+# SDK 빌드 산출물
+rn-sdk/android/.gradle/
+rn-sdk/android/build/
+rn-sdk/android/rnsdk/build/
+rn-sdk/android/local.properties
+
+# 배포 전에 npm run bundle:android 로 만들어야 하는 파일입니다.
+# 소스가 아니라 산출물이라 커밋하지 않습니다.
+rn-sdk/android/rnsdk/src/main/assets/index.android.bundle
+rn-sdk/android/rnsdk/src/main/res/drawable-*/
+rn-sdk/android/rnsdk/src/main/res/raw/
+
+# iOS SDK 산출물
+rn-sdk/ios/build/
+rn-sdk/ios/Pods/
+rn-sdk/ios/*.xcframework/
+rn-sdk/ios/RnSdk/Resources/main.jsbundle
+
+# 소비 앱
+consumer-android/.gradle/
+consumer-android/build/
+consumer-android/app/build/
+consumer-android/local.properties
+consumer-ios/build/
+consumer-ios/Pods/
+consumer-ios/*.xcworkspace/xcuserdata/
+consumer-ios/*.xcodeproj/xcuserdata/
+consumer-ios/*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# 서명 관련은 저장소에 넣지 않습니다.
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+*.cer
+keystore.properties
+.env
+.env.*

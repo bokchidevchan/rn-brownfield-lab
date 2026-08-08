@@ -1,0 +1,63 @@
+plugins {
+    id "com.android.application"
+    id "org.jetbrains.kotlin.android"
+}
+
+android {
+    namespace "com.example.shop"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.example.shop"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        // RN 이 arm64 외의 ABI 도 들고 오므로 앱 쪽에서 줄입니다.
+        // SDK 를 쓰더라도 용량 관리 책임은 여전히 앱 팀에 있습니다.
+        if (project.hasProperty("abiFilters")) {
+            ndk { abiFilters.addAll(project.property("abiFilters").split(",")) }
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+        viewBinding true
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+dependencies {
+    /**
+     * 이 한 줄이 01 번의 android/ 디렉토리 전체를 대체합니다.
+     *
+     * react-android 와 hermes-android 는 SDK 의 POM 에 api 로 선언돼 있어서
+     * Maven Central 에서 자동으로 따라옵니다. JS 번들은 AAR 의 assets 에 들어 있어서
+     * 빌드할 때 이 앱의 APK 로 병합됩니다.
+     *
+     * 이 프로젝트에는 node_modules 도 Metro 설정도 없습니다.
+     */
+    implementation("com.example.rnsdk:rn-sdk:0.1.0")
+
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
+}

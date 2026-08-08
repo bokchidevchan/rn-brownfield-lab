@@ -1,0 +1,24 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      라이브러리 매니페스트는 소비 앱 매니페스트로 병합됩니다.
+      그래서 소비 앱은 아무것도 추가하지 않아도 RnSdkActivity 가 등록되고,
+      INTERNET 권한도 자동으로 붙습니다.
+
+      편한 만큼 위험합니다. SDK 가 소비 앱의 권한을 조용히 늘리는 셈입니다.
+      실제 배포용 SDK 라면 어떤 권한이 왜 필요한지 문서에 명시해야 하고,
+      앱 팀은 병합된 매니페스트(build/outputs/logs/manifest-merger-*.txt)를
+      확인하는 습관이 필요합니다.
+
+      RN 의 네트워킹 모듈이 INTERNET 을 요구합니다. Metro 에 붙는 개발 빌드도 마찬가지입니다.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application>
+        <activity
+            android:name=".internal.RnSdkActivity"
+            android:exported="false"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+            android:windowSoftInputMode="adjustResize" />
+    </application>
+</manifest>

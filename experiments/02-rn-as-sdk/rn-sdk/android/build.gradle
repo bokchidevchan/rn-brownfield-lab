@@ -1,0 +1,12 @@
+plugins {
+    id "com.android.library" version "8.6.0" apply false
+    id "org.jetbrains.kotlin.android" version "2.0.21" apply false
+}
+
+ext {
+    compileSdkVersion = 35
+    minSdkVersion = 24
+    // 소비 앱이 받을 RN 버전. 여기 하나만 올리면 소비 앱은 버전 문자열만 바꾸면 됩니다.
+    reactNativeVersion = "0.76.9"
+    sdkVersion = "0.1.0"
+}

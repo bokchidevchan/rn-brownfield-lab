@@ -1,0 +1,31 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        // SDK 를 여기서 받습니다. 실제로는 사내 Nexus 나 Artifactory 가 들어갈 자리입니다.
+        mavenLocal()
+        google()
+        mavenCentral()
+    }
+}
+
+/**
+ * 01 번의 settings.gradle 과 비교해 보세요. 이 파일에서 사라진 것들입니다.
+ *
+ *   pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
+ *   plugins { id("com.facebook.react.settings") }
+ *   extensions.configure(com.facebook.react.ReactSettingsExtension) { ... }
+ *   includeBuild("../node_modules/@react-native/gradle-plugin")
+ *
+ * 전부 없습니다. node_modules 라는 디렉토리 자체가 이 프로젝트에 없습니다.
+ * 평범한 안드로이드 프로젝트입니다.
+ */
+rootProject.name = "ConsumerShop"
+include ":app"
