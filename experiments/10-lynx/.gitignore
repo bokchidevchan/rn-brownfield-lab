@@ -1,0 +1,4 @@
+node_modules/
+dist/
+.rspeedy/
+*.log
