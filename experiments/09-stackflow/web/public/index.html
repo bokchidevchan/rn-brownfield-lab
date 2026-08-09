@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>웹뷰 네비게이션 비교</title>
+  <style>
+    html, body { margin: 0; background: #f5f5f7; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+    main { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    h1 { font-size: 22px; margin: 4px 0 0; }
+    p { font-size: 13px; line-height: 1.7; color: #6b6b74; margin: 0; }
+    a.card {
+      display: block; background: #fff; border-radius: 12px; padding: 16px;
+      text-decoration: none; color: inherit; border: 1px solid #e9ecef;
+    }
+    a.card b { font-size: 16px; display: block; margin-bottom: 6px; }
+    a.card span { font-size: 12px; color: #6b6b74; line-height: 1.6; }
+    ol { font-size: 13px; line-height: 1.9; color: #343a40; padding-left: 20px; margin: 0; }
+    .box { background: #fff; border-radius: 12px; padding: 16px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>웹뷰 네비게이션 비교</h1>
+  <p>화면 내용은 셋이 완전히 같습니다. 다른 것은 화면을 옮기는 방식뿐입니다.</p>
+
+  <a class="card" href="/plain-mpa/">
+    <b>1. plain MPA</b>
+    <span>URL 마다 문서를 다시 받습니다. 서버 렌더링 웹을 웹뷰에 그대로 얹은 경우입니다.</span>
+  </a>
+  <a class="card" href="/plain-spa/">
+    <b>2. plain SPA</b>
+    <span>React 상태로 화면을 갈아 끼웁니다. 가장 흔한 방식입니다.</span>
+  </a>
+  <a class="card" href="/stackflow/">
+    <b>3. Stackflow</b>
+    <span>스택에 화면을 쌓습니다. 이전 화면이 살아 있습니다.</span>
+  </a>
+
+  <div class="box">
+    <b style="font-size:14px">직접 해볼 것</b>
+    <ol>
+      <li>목록을 한참 내린 뒤 상품을 누르고, 다시 뒤로 옵니다. 스크롤이 유지되나요?</li>
+      <li>화면이 바뀔 때 애니메이션이 있나요, 툭 바뀌나요?</li>
+      <li>상세 화면에서 왼쪽 가장자리를 오른쪽으로 미세요. 이전 화면이 따라오나요?</li>
+      <li>터미널에서 <code>curl localhost:3000/__log</code> 로 요청이 늘었는지 봅니다.</li>
+      <li>안드로이드 백 버튼을 눌러 봅니다. 셋 다 어떻게 되나요?</li>
+    </ol>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,2 @@
+rootProject.name = 'NavLab'
+include ':app'
