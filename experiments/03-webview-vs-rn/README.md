@@ -331,6 +331,9 @@ cd .. && ./bench.sh 10
 릴리스로 재려면 `assembleRelease` 후 서명해서 설치하고
 `BENCH_PKG=com.example.bench ./bench.sh 10` 으로 돌립니다.
 
+같은 화면의 순수 네이티브 판(`NativeDetailActivity`)도 있습니다. 11번 메모리 실험의
+기준점으로 추가했고 `--es auto native` 로 엽니다. 런타임 부팅이 없어서 warm 개념도 없습니다.
+
 iOS 는 이렇습니다.
 
 ```bash

@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  js/screens/ProductDetailScreen.js, web/public/index.html 과 같은 내용, 같은 구조입니다.
+  섹션 4개, 행 6개, 버튼 2개. 그래야 11번 메모리 비교가 성립합니다.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F7">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_badge"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:text="NATIVE"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="상품 상세"
+            android:textColor="#111114"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_section"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/BenchH2"
+                android:text="네이티브가 넘긴 값" />
+
+            <LinearLayout style="@style/BenchRow">
+                <TextView style="@style/BenchRowLabel" android:text="productId" />
+                <TextView
+                    android:id="@+id/product_id"
+                    style="@style/BenchRowValue"
+                    android:text="(없음)" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/BenchRow">
+                <TextView style="@style/BenchRowLabel" android:text="entryPoint" />
+                <TextView
+                    android:id="@+id/entry_point"
+                    style="@style/BenchRowValue"
+                    android:text="(없음)" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/BenchNote"
+                android:text="Intent extra 로 들어옵니다. 직렬화도 브리지도 없이 같은 프로세스의 객체를 그대로 받습니다. 타입은 컴파일 타임에 고정됩니다." />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_section"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/BenchH2"
+                android:text="런타임" />
+
+            <LinearLayout style="@style/BenchRow">
+                <TextView style="@style/BenchRowLabel" android:text="탭 → 첫 페인트" />
+                <TextView
+                    android:id="@+id/ttfp"
+                    style="@style/BenchRowValue"
+                    android:text="재는 중" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/BenchRow">
+                <TextView style="@style/BenchRowLabel" android:text="이 프로세스에서 열린 횟수" />
+                <TextView
+                    android:id="@+id/mount_count"
+                    style="@style/BenchRowValue"
+                    android:text="1" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/BenchNote"
+                android:text="별도 런타임이 없는 지점입니다. JS 엔진도 브라우저 엔진도 부팅하지 않아서, 이 화면의 비용은 뷰 인플레이트와 레이아웃뿐입니다." />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_section"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/BenchH2"
+                android:text="네이티브 호출" />
+
+            <LinearLayout style="@style/BenchRow">
+                <TextView style="@style/BenchRowLabel" android:text="appVersion" />
+                <TextView
+                    android:id="@+id/app_version"
+                    style="@style/BenchRowValue"
+                    android:text="-" />
+            </LinearLayout>
+
+            <LinearLayout style="@style/BenchRow">
+                <TextView style="@style/BenchRowLabel" android:text="왕복 시간" />
+                <TextView
+                    android:id="@+id/rtt"
+                    style="@style/BenchRowValue"
+                    android:text="-" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/host_info_button"
+                style="@style/BenchButton"
+                android:text="호스트 정보 가져오기" />
+
+            <TextView
+                style="@style/BenchNote"
+                android:text="함수 호출 한 줄입니다. 웹뷰의 브리지 배관도 RN 의 네이티브 모듈 경계도 없습니다. 비교의 기준점이라 왕복 시간은 사실상 0 입니다." />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_section"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/BenchH2"
+                android:text="닫기" />
+
+            <TextView
+                android:id="@+id/close_button"
+                style="@style/BenchButton"
+                android:background="@drawable/bg_button_primary"
+                android:text="장바구니에 담고 닫기"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

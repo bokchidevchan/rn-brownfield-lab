@@ -112,6 +112,11 @@ class MainActivity : AppCompatActivity() {
         when (target) {
             "webview" -> launchWeb()
             "rn" -> launchRn()
+            // 런타임 부팅이 없는 세 번째 기준점. warm 개념이 없어서 cold 만 있습니다.
+            "native" -> {
+                Bench.start("native_cold")
+                resultLauncher.launch(NativeDetailActivity.intentFor(this, "SKU-1024"))
+            }
         }
     }
 
