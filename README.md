@@ -22,6 +22,7 @@ experiments/
   08-bundlers-hermes/ Metro, webpack, esbuild 실측 비교와 Hermes 의 층 구분
   09-stackflow/     웹뷰 네비게이션 3종 비교 (plain MPA, plain SPA, Stackflow)
   10-lynx/          ByteDance Lynx 를 돌려 보고 RN 과 비교
+  11-memory/        RN, Lynx, 웹뷰의 프로세스 메모리 구조와 실측
 ```
 
 ## 실험
@@ -38,6 +39,7 @@ experiments/
 | [08-bundlers-hermes](experiments/08-bundlers-hermes) | 같은 앱을 webpack, esbuild, Metro, Rspack 으로 빌드해 실측. Hermes 는 엔진 층 | 웹 헤드리스, 번들 실측 완료 |
 | [09-stackflow](experiments/09-stackflow) | 같은 화면을 plain MPA, plain SPA, Stackflow 로 만들어 웹뷰에서 비교 | Android 에뮬레이터 검증 완료 |
 | [10-lynx](experiments/10-lynx) | Lynx 를 LynxExplorer 로 실행하고 같은 화면을 RN 과 번들, 빌드 시간 비교 | Android 에뮬레이터 검증 완료 |
+| [11-memory](experiments/11-memory) | 웹뷰, RN, Lynx 화면을 띄우고 PSS 실측. 프로세스 구조와 메모리 내역 비교 | Android 에뮬레이터 측정 완료 |
 
 동작 원리 정리는 [01-brownfield/EXPLAINER.md](experiments/01-brownfield/EXPLAINER.md) 에
 있습니다. 바이트코드와 네이티브 바이너리의 차이, Hermes 의 컴파일러와 엔진 구분,
